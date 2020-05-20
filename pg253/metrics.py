@@ -61,7 +61,7 @@ class Metrics:
         first_backups = {}
         last_backups = {}
 
-        for item in client.listContent('/'):
+        for item in client.listContent(self.config.aws_s3_prefix):
             print(item)
             if parse_filename.search(item):
                 matches = parse_filename.match(item)

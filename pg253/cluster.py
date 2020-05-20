@@ -13,7 +13,7 @@ class Cluster:
         print("OK")
 
     def listDatabase(self):
-        cmd = ['psql', '-qAtX', '-c', '"SELECT datname FROM pg_database"']
+        cmd = ['psql', '-qAtX', '-c', 'SELECT datname FROM pg_database']
         res = run(cmd, capture_output=True)
         if res.returncode != 0:
             raise Exception('Unable to retrieve database list: %s' % res.stderr.decode())

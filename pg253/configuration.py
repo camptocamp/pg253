@@ -11,6 +11,7 @@ class Configuration:
               'BLACKLISTED_DATABASES': '.*backup.*|postgres|rdsadmin',
               'AWS_ENDPOINT': None,
               'AWS_S3_BUCKET': None,
+              'AWS_S3_PREFIX': '',
               'AWS_ACCESS_KEY_ID': None,
               'AWS_SECRET_ACCESS_KEY': None,
               }
@@ -37,11 +38,13 @@ class Configuration:
         res += "\tUser : %s\n" % self.pguser
         res += "\tPassword : %s\n" % ('X' * len(self.pgpassword))
         res += "\tBlacklisted DBs: %s\n" % self.blacklisted_databases
-        res += "Buffer configuration:\n"
+        res += "Backup configuration:\n"
         res += "\tBuffer size: %s\n" % sizeof_fmt(self.buffer_size)
+        res += "\tSchedule: %s\n" % self.schedule
         res += "Target configuration:\n"
         res += "\tEndpoint: %s\n" % self.aws_endpoint
         res += "\tBucket: %s\n" % self.aws_s3_bucket
+        res += "\tPrefix: %s\n" % self.aws_s3_prefix
         res += "\tAccess Key: %s\n" % self.aws_access_key_id
         res += "\tSecret Key : %s\n" % ('X' * len(self.aws_secret_access_key))
         return res

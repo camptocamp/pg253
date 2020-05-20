@@ -17,6 +17,7 @@ class ClientS3:
         continuation_token = None
         marker = None
         fetch_method = "V2"
+        prefix_length = len(prefix)
         while True:
             s3_args = {
                 "Bucket": self.config.aws_s3_bucket,
@@ -45,7 +46,10 @@ class ClientS3:
                 response = self.client.list_objects(**s3_args)
 
             for item in response.get("Contents", []):
-                yield item['Key'].replace(prefix,'')
+                print('Item: %s' % item['Key'])
+                path = item['Key'][prefix_length:len(item['Key'])]
+                if '/' not in path:
+                    yield path
 
             if response.get("IsTruncated"):
                 if fetch_method == "V1":

@@ -11,8 +11,8 @@ class Transfer:
         self.buffer_size = int(config.buffer_size)
         self.buffer = bytearray(self.buffer_size)
         now = datetime.datetime.now()
-        self.key = ('postgres.%s.%s.dump'
-                    % (database, now.strftime('%Y%m%d-%H%M')))
+        self.key = ('%spostgres.%s.%s.dump'
+                    % (config.aws_s3_prefix, database, now.strftime('%Y%m%d-%H%M')))
         print(self.key)
         self.client = ClientS3(config)
 
