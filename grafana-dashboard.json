@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1589902933326,
+  "iteration": 1589967265377,
   "links": [],
   "panels": [
     {
@@ -25,7 +25,7 @@
       "fontSize": "100%",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 5,
         "x": 0,
         "y": 0
       },
@@ -101,11 +101,11 @@
       "fontSize": "100%",
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 5,
+        "x": 5,
         "y": 0
       },
-      "id": 26,
+      "id": 30,
       "pageSize": null,
       "showHeader": true,
       "sort": {
@@ -168,6 +168,158 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Last backup",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 10,
+        "y": 0
+      },
+      "id": 31,
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "database",
+          "type": "string"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": null,
+          "mappingType": 1,
+          "pattern": "Value",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "hidden",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "expr": "count by (database) (backups{database=~\"$database\"})",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Backup count",
+      "transform": "table",
+      "type": "table"
+    },
+    {
+      "columns": [],
+      "datasource": null,
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      },
+      "id": 26,
+      "pageSize": null,
+      "showHeader": true,
+      "sort": {
+        "col": 0,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "database",
+          "type": "string"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "Value",
+          "thresholds": [],
+          "type": "number",
+          "unit": "dateTimeAsIso"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "hidden",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "expr": "backups{database=~\"$database\"} * 1000",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Backup list",
       "transform": "table",
       "type": "table"
     },
@@ -1395,7 +1547,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-7d",
     "to": "now"
   },
   "timepicker": {
@@ -1418,5 +1570,5 @@
   "variables": {
     "list": []
   },
-  "version": 19
+  "version": 20
 }
