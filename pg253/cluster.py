@@ -22,6 +22,10 @@ class Cluster:
         dbs.remove('template0')
         return dbs
 
+    def backup_and_prune(self):
+        self.backup()
+        self.prune()
+
     def backup(self):
         for database in self.listDatabase():
             backup_start = datetime.now()
@@ -32,3 +36,6 @@ class Cluster:
             self.metrics.setLastBackup(database, backup_end)
             self.metrics.setBackupDuration(database, backup_end.timestamp() - backup_start.timestamp())
             print('End backup of %s' % database)
+
+    def prune(self):
+        pass

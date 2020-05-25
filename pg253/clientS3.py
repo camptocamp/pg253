@@ -46,7 +46,7 @@ class ClientS3:
                 response = self.client.list_objects(**s3_args)
 
             for item in response.get("Contents", []):
-                print('Item: %s' % item['Key'])
+                # print('Item: %s' % item['Key'])
                 path = item['Key'][prefix_length:len(item['Key'])]
                 if '/' not in path:
                     yield path

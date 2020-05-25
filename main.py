@@ -17,8 +17,8 @@ def main():
 
     # Start scheduler
     scheduler = BlockingScheduler()
-    scheduler.add_job(cluster.backup, CronTrigger.from_crontab(config.schedule))
-    #scheduler.add_job(cluster.backup, 'interval', seconds=3)
+    scheduler.add_job(cluster.backup_and_prune, CronTrigger.from_crontab(config.schedule))
+    #scheduler.add_job(cluster.backup_and_prune, 'interval', seconds=3)
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):

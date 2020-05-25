@@ -9,6 +9,7 @@ class Configuration:
               'PGUSER': None,
               'PGPASSWORD': None,
               'BLACKLISTED_DATABASES': '.*backup.*|postgres|rdsadmin',
+              'RETENTION_DAYS': '15',
               'AWS_ENDPOINT': None,
               'AWS_S3_BUCKET': None,
               'AWS_S3_PREFIX': '',
@@ -41,6 +42,7 @@ class Configuration:
         res += "Backup configuration:\n"
         res += "\tBuffer size: %s\n" % sizeof_fmt(self.buffer_size)
         res += "\tSchedule: %s\n" % self.schedule
+        res += "\tRetention: %s days\n" % self.retention_days
         res += "Target configuration:\n"
         res += "\tEndpoint: %s\n" % self.aws_endpoint
         res += "\tBucket: %s\n" % self.aws_s3_bucket

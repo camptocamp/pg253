@@ -5,6 +5,7 @@ from prometheus_client import start_http_server
 from prometheus_client import Gauge, Counter
 
 from pg253.clientS3 import ClientS3
+from pg253.remote import Remote
 
 
 class Metrics:
@@ -55,27 +56,14 @@ class Metrics:
 
     def readRemoteBackup(self):
 
-        parse_filename = re.compile(r'postgres.([^\.]+).([^\.]+).dump')
-        client = ClientS3(self.config)
+        remote = Remote(self.config)
+        remote.fetch()
 
-        first_backups = {}
-        last_backups = {}
-
-        for item in client.listContent(self.config.aws_s3_prefix):
-            print(item)
-            if parse_filename.search(item):
-                matches = parse_filename.match(item)
-                database = matches.group(1)
-                date = datetime.datetime.strptime(matches.group(2), '%Y%m%d-%H%M')
-                if database not in first_backups or date.timestamp() < first_backups[database]:
-                    first_backups[database] = date.timestamp()
-                if database not in last_backups or date.timestamp() > last_backups[database]:
-                    last_backups[database] = date.timestamp()
-                self.backups.labels(database, matches.group(2)).set(date.timestamp())
-        for database in first_backups:
-            self.first_backup.labels(database).set(first_backups[database])
-        for database in last_backups:
-            self.last_backup.labels(database).set(last_backups[database])
+        for database in remote.backups:
+            self.first_backup.labels(database).set(min(remote.backups[database]).timestamp())
+            self.last_backup.labels(database).set(max(remote.backups[database]).timestamp())
+            for backup_datetime in remote.backups[database]:
+                self.backups.labels(database, backup_datetime.strftime('%Y%m%d-%H%M')).set(backup_datetime.timestamp())
 
     def setLastBackup(self, database, backup_datetime):
         self.last_backup.labels(database).set(backup_datetime.timestamp())
