@@ -2,6 +2,7 @@ from subprocess import Popen, PIPE
 import datetime
 
 from pg253.clientS3 import ClientS3
+from pg253.remote import Remote
 
 
 class Transfer:
@@ -10,10 +11,8 @@ class Transfer:
         self.metrics = metrics
         self.buffer_size = int(config.buffer_size)
         self.buffer = bytearray(self.buffer_size)
-        now = datetime.datetime.now()
-        self.key = ('%spostgres.%s.%s.dump'
-                    % (config.aws_s3_prefix, database, now.strftime('%Y%m%d-%H%M')))
-        print(self.key)
+        remote = Remote(config)
+        self.key = remote.generateKey(database)
         self.client = ClientS3(config)
 
     def run(self):

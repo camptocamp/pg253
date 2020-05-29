@@ -61,8 +61,13 @@ class ClientS3:
             else:
                 break
 
-
-
+    def delete(self, key):
+        res = self.client.delete_object(
+            Bucket=self.config.aws_s3_bucket,
+            Key=key,
+        )
+        if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
+            raise Exception('Error during deletion of %s' % key)
 
 
 class Upload:

@@ -1,8 +1,9 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from subprocess import run
 
 from pg253.transfer import Transfer
+from pg253.remote import Remote
 
 
 class Cluster:
@@ -38,4 +39,14 @@ class Cluster:
             print('End backup of %s' % database)
 
     def prune(self):
-        pass
+        remote = Remote(self.config)
+        remote.fetch()
+
+        # Compute date of oldest backup we need to keep
+        delete_before = (datetime.now()
+                        - timedelta(days=float(self.config.retention_days)))
+        for database in remote.backups:
+            for to_delete in [dt for dt in remote.backups[database]
+                              if dt < delete_before]:
+                remote.delete(database, to_delete)
+                self.metrics.removeBackup(database, to_delete)

@@ -95,3 +95,6 @@ class Metrics:
 
     def getCurrentWrite(self, database):
         return self.current_write[database]
+
+    def removeBackup(self, database, dt):
+        self.backups.remove(self, database, dt.strftime('%Y%m%d-%H%M'))
