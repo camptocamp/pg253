@@ -9,16 +9,15 @@ from pg253.configuration import Configuration
 
 
 def main():
-    config = Configuration()
-    print(config)
-    metrics = Metrics(config)
-    cluster = Cluster(config, metrics)
-    print(cluster.listDatabase())
+    print(Configuration.str())
+    metrics = Metrics()
+    cluster = Cluster(metrics)
+    print('Databases : %s' % cluster.listDatabase())
 
     # Start scheduler
     scheduler = BlockingScheduler()
-    scheduler.add_job(cluster.backup_and_prune, CronTrigger.from_crontab(config.schedule))
-    #scheduler.add_job(cluster.backup_and_prune, 'interval', seconds=3)
+    scheduler.add_job(cluster.backup_and_prune, CronTrigger.from_crontab(Configuration.get('schedule')))
+    # scheduler.add_job(cluster.backup_and_prune, 'interval', seconds=3)
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):

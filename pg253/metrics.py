@@ -4,18 +4,17 @@ import datetime
 from prometheus_client import start_http_server
 from prometheus_client import Gauge, Counter
 
-from pg253.clientS3 import ClientS3
 from pg253.remote import Remote
+from pg253.configuration import Configuration
 
 
 class Metrics:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
         self.current_read = {}
         self.current_write = {}
 
         # Start and configure prometheus exporter
-        start_http_server(int(config.prometheus_exporter_port))
+        start_http_server(int(Configuration.get('prometheus_exporter_port')))
 
         self.total_bytes_read = (
             Counter('total_bytes_read',
@@ -51,19 +50,26 @@ class Metrics:
             Gauge('backup_duration',
                   'Duration of backup',
                   ['database']))
-        self.readRemoteBackup()
+        self._readRemoteBackup()
 
 
-    def readRemoteBackup(self):
-
-        remote = Remote(self.config)
-        remote.fetch()
-
-        for database in remote.backups:
-            self.first_backup.labels(database).set(min(remote.backups[database]).timestamp())
-            self.last_backup.labels(database).set(max(remote.backups[database]).timestamp())
-            for backup_datetime in remote.backups[database]:
+    def _readRemoteBackup(self):
+        Remote.fetch()
+        self.refreshMetrics()
+        for database in Remote.BACKUPS:
+            for backup_datetime in Remote.BACKUPS[database]:
                 self.backups.labels(database, backup_datetime.strftime('%Y%m%d-%H%M')).set(backup_datetime.timestamp())
+
+    def refreshMetrics(self):
+        for database in Remote.BACKUPS:
+            (self.first_backup.labels(database)
+             .set(min(Remote.BACKUPS[database]).timestamp()))
+            (self.last_backup.labels(database)
+             .set(max(Remote.BACKUPS[database]).timestamp()))
+
+    def removeBackup(self, database, dt):
+        self.backups.remove(database, dt.strftime('%Y%m%d-%H%M'))
+        self.refreshMetrics()
 
     def setLastBackup(self, database, backup_datetime):
         self.last_backup.labels(database).set(backup_datetime.timestamp())
@@ -95,6 +101,3 @@ class Metrics:
 
     def getCurrentWrite(self, database):
         return self.current_write[database]
-
-    def removeBackup(self, database, dt):
-        self.backups.remove(self, database, dt.strftime('%Y%m%d-%H%M'))
