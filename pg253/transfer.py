@@ -1,8 +1,9 @@
 from subprocess import Popen, PIPE
-import datetime
+from datetime import datetime
 
 from pg253.remote import Remote
 from pg253.configuration import Configuration
+from pg253.utils import sizeof_fmt
 
 
 class Transfer:
@@ -14,15 +15,18 @@ class Transfer:
         self.key = Remote.generateKey(database)
 
     def run(self):
+        backup_start = datetime.now()
         input_cmd = 'pg_dump -Fc -v -d %s' % self.database
         upload = Remote.createUpload(self.database)
         self.metrics.resetTransfer(self.database)
 
-        print('%s --> %s' % (input_cmd, self.key))
+        print("Begin backup of '%s' database to %s/%s"
+              % (self.database, upload.target['Bucket'], upload.target['Key']))
+
         with Popen(input_cmd.split(), stdout=PIPE, stderr=PIPE) as input:
             while True:
 
-                self.metrics.setPart(self.database, upload.getPart())
+                self.metrics.setPart(self.database, upload.part_count)
 
                 # Retrieve data from input in the buffer
                 bytes_read = input.stdout.readinto(self.buffer)
@@ -32,12 +36,13 @@ class Transfer:
                     break
 
                 # Push buffer to object storage
-                res = upload.uploadPart(self.buffer,
-                                        bytes_read,
-                                        self.buffer_size)
-                print(res)
+                upload.uploadPart(self.buffer,
+                                  bytes_read,
+                                  self.buffer_size)
+
                 self.metrics.incrementWrite(self.database, bytes_read)
-                print('Write %s bytes' % bytes_read)
+                print('  Part %s, %s bytes written'
+                      % (upload.part_count - 1, sizeof_fmt(upload.bytes_uploaded)))
 
             if input.poll() is not None:
                 if upload.getBytesUploaded() == 0 or input.returncode != 0:
@@ -45,12 +50,12 @@ class Transfer:
                     raise Exception(
                         'Error: no data transfered or error on pg_dump: %s'
                         % input.stderr.read())
-                else:
-                    upload.complete()
-                    self.metrics.refreshMetrics()
-                print('%s bytes written'
-                      % self.metrics.getCurrentWrite(self.database))
+
+                upload.complete()
+                self.metrics.addBackup(self.database, upload.start_time)
+                backup_end = datetime.now()
+                self.metrics.setBackupDuration(self.database, backup_end.timestamp() - backup_start.timestamp())
+                self.metrics.refreshMetrics()
+                print("End backup of '%s'" % self.database)
             else:
                 raise Exception('Read of input finished but process is not finished, should not happen')
-
-        print('Done')

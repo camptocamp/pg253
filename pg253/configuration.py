@@ -1,5 +1,7 @@
 import os
 
+from pg253.utils import sizeof_fmt
+
 class Configuration:
 
     CONFIG = {'SCHEDULE': '20 2 * * *',
@@ -35,13 +37,6 @@ class Configuration:
     @staticmethod
     def str():
         """Generate a string description of the configuration"""
-        def sizeof_fmt(num):
-            num = int(num)
-            for unit in ['B', 'KB', 'MB', 'GB']:
-                if abs(num) < 1024.0:
-                    return "%3.1f%s" % (num, unit)
-                num /= 1024.0
-            return "%.1f%s" % (num, 'TB')
 
         res = ''
         res += "Source configuration:\n"

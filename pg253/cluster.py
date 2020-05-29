@@ -32,14 +32,7 @@ class Cluster:
 
     def backup(self):
         for database in self.listDatabase():
-            backup_start = datetime.now()
-            print("Begin backup of '%s' database" % database)
-            transfer = Transfer(database, self.metrics)
-            transfer.run()
-            backup_end = datetime.now()
-            self.metrics.setLastBackup(database, backup_end)
-            self.metrics.setBackupDuration(database, backup_end.timestamp() - backup_start.timestamp())
-            print('End backup of %s' % database)
+            Transfer(database, self.metrics).run()
 
     def prune(self):
         # Compute date of oldest backup we need to keep

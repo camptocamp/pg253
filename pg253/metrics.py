@@ -58,7 +58,8 @@ class Metrics:
         self.refreshMetrics()
         for database in Remote.BACKUPS:
             for backup_datetime in Remote.BACKUPS[database]:
-                self.backups.labels(database, backup_datetime.strftime('%Y%m%d-%H%M')).set(backup_datetime.timestamp())
+                self.addBackup(database, backup_datetime)
+
 
     def refreshMetrics(self):
         for database in Remote.BACKUPS:
@@ -69,6 +70,10 @@ class Metrics:
 
     def removeBackup(self, database, dt):
         self.backups.remove(database, dt.strftime('%Y%m%d-%H%M'))
+        self.refreshMetrics()
+
+    def addBackup(self, database, dt):
+        self.backups.labels(database, dt.strftime('%Y%m%d-%H%M')).set(dt.timestamp())
         self.refreshMetrics()
 
     def setLastBackup(self, database, backup_datetime):

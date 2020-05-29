@@ -60,6 +60,10 @@ class Remote:
             else:
                 raise Exception("Invalid fetch method")
 
+            if response['ResponseMetadata']['HTTPStatusCode'] >= 300:
+                raise Exception('Error during listing of %s'
+                                % prefix)
+
             # Check if pagination is broken in V2
             if (fetch_method == "V2" and response.get("IsTruncated")
                     and "NextContinuationToken" not in response):
@@ -130,9 +134,6 @@ class Upload:
         self.parts = []
         self.bytes_uploaded = 0
 
-    def getPart(self):
-        return self.part_count
-
     def getBytesUploaded(self):
         return self.bytes_uploaded
 
@@ -143,7 +144,9 @@ class Upload:
                                         Body=body if size == buffer_size
                                         else body[0:size])
 
-        print(res)
+        if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
+            raise Exception('Error during upload of part %s of %s'
+                            % (self.part_count, self.target))
         self.parts.append({'ETag': res['ETag'], 'PartNumber': self.part_count})
         self.part_count += 1
         self.bytes_uploaded += size
@@ -152,11 +155,15 @@ class Upload:
     def abort(self):
         res = Remote.CLIENT.abort_multipart_upload(**self.target,
                                                    UploadId=self.upload_id)
-        print(res)
+        if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
+            raise Exception('Error during abort of upload  of %s'
+                            % self.target)
 
     def complete(self):
         res = Remote.CLIENT.complete_multipart_upload(**self.target,
                                                       MultipartUpload={'Parts': self.parts},
                                                       UploadId=self.upload_id)
+        if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
+            raise Exception('Error during complete of upload  of %s'
+                            % self.target)
         Remote.add(self.database, self.start_time)
-        return res
