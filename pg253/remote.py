@@ -25,7 +25,7 @@ class Remote:
                    dt.strftime('%Y%m%d-%H%M')))
 
     @staticmethod
-    def fetch():
+    def fetch(*unused):
         for item in Remote.list():
             if Remote.PARSE_FILENAME.search(item):
                 matches = Remote.PARSE_FILENAME.match(item)

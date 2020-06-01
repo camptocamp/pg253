@@ -9,6 +9,7 @@ from pg253.configuration import Configuration
 
 class Cluster:
     def __init__(self, metrics):
+        self.running = False
         self.metrics = metrics
         self.db_exclude = \
             re.compile(Configuration.get('blacklisted_databases'))
@@ -24,11 +25,20 @@ class Cluster:
         dbs.remove('template0')
         return dbs
 
-    def backup_and_prune(self):
-        print("Backup...")
-        self.backup()
-        print("Prune...")
-        self.prune()
+    def backup_and_prune(self, *unused):
+            if not self.running:
+                try:
+                    self.running = True
+                    print("Backup...")
+                    self.backup()
+                    print("Prune...")
+                    self.prune()
+                    self.running = False
+                except Exception as e:
+                    self.running = False
+                    raise e
+            else:
+                print ('Backup already running')
 
     def backup(self):
         for database in self.listDatabase():
