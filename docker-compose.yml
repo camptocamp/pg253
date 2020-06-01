@@ -1,10 +1,14 @@
 ---
-version: '2'
+version: '3'
 services:
   postgres-to-s3:
     image: camptocamp/postgres-backup-to-s3:latest
     build: ./
+    tty: true
+    restart: on-failure
     environment:
+      SCHEDULE: '* * * * *'
+      AWS_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: AKIAACCESSKEY
       AWS_SECRET_ACCESS_KEY: SECRETSECRET
       #AWS_DEFAULT_REGION: eu-west-1
@@ -42,13 +46,18 @@ services:
     environment:
       MINIO_ACCESS_KEY: AKIAACCESSKEY
       MINIO_SECRET_KEY: SECRETSECRET
+
   create-bucket:
     image: amazon/aws-cli
-    command: --endpoint-url http://minio:9000 s3 mb s3://postgres-to-s3
+    entrypoint: /create-bucket-entrypoint.sh
+    stop_signal: SIGKILL
+    volumes:
+      - ./create-bucket-entrypoint.sh:/create-bucket-entrypoint.sh
     environment:
+      MINIO_URL: http://minio:9000
+      BUCKET: postgres-to-s3
       AWS_ACCESS_KEY_ID: AKIAACCESSKEY
       AWS_SECRET_ACCESS_KEY: SECRETSECRET
-    restart: on-failure
 
   # Observability
   prometheus:

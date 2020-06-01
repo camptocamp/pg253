@@ -26,19 +26,19 @@ class Cluster:
         return dbs
 
     def backup_and_prune(self, *unused):
-            if not self.running:
-                try:
-                    self.running = True
-                    print("Backup...")
-                    self.backup()
-                    print("Prune...")
-                    self.prune()
-                    self.running = False
-                except Exception as e:
-                    self.running = False
-                    raise e
-            else:
-                print ('Backup already running')
+        if not self.running:
+            try:
+                self.running = True
+                print("Backup...")
+                self.backup()
+                print("Prune...")
+                self.prune()
+                self.running = False
+            except Exception as e:
+                self.running = False
+                raise e
+        else:
+            print('Backup already running')
 
     def backup(self):
         for database in self.listDatabase():

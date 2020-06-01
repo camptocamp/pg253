@@ -1,4 +1,6 @@
--- Postgres DB
+-- Big DB
+CREATE DATABASE big;
+\c big;
 CREATE TABLE data(
   id   serial,
   data text
