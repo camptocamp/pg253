@@ -1,9 +1,23 @@
 from subprocess import Popen, PIPE
 from datetime import datetime
+from threading import Thread
 
 from pg253.remote import Remote
 from pg253.configuration import Configuration
 from pg253.utils import sizeof_fmt
+
+class StdErr(Thread):
+    def __init__(self, stream):
+        Thread.__init__(self)
+        self.stream = stream
+        self.output = ""
+
+    def run(self):
+        while True:
+            output = self.stream.read().decode()
+            if len(output) == 0:
+                break
+            self.output += output
 
 
 class Transfer:
@@ -24,8 +38,9 @@ class Transfer:
               % (self.database, upload.target['Bucket'], upload.target['Key']))
 
         with Popen(input_cmd.split(), stdout=PIPE, stderr=PIPE) as input:
+            s = StdErr(input.stderr)
+            s.start()
             while True:
-
                 self.metrics.setPart(self.database, upload.part_count)
 
                 # Retrieve data from input in the buffer
@@ -49,7 +64,7 @@ class Transfer:
                     upload.abort()
                     raise Exception(
                         'Error: no data transfered or error on pg_dump: %s'
-                        % input.stderr.read())
+                        % s.output)
 
                 upload.complete()
                 self.metrics.addBackup(self.database, upload.start_time)
