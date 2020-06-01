@@ -1,3 +1,5 @@
+![Build status](https://gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3/badges/master/pipeline.svg "Build Status")
+
 PG253 : Backup tools for DB As A Service like AWS RDS
 =====================================================
 
