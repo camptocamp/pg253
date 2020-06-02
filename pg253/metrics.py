@@ -50,6 +50,10 @@ class Metrics:
             Gauge('backup_duration',
                   'Duration of backup',
                   ['database']))
+        self.error = (
+            Gauge('error',
+                  'Error during backup',
+                  ['database']))
         self._readRemoteBackup()
 
 

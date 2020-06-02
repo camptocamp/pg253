@@ -34,15 +34,23 @@ class Cluster:
                 print("Prune...")
                 self.prune()
                 self.running = False
+                self.metrics.error.labels('').set(0)
             except Exception as e:
                 self.running = False
+                self.metrics.error.labels('').set(1)
                 raise e
         else:
             print('Backup already running')
 
     def backup(self):
         for database in self.listDatabase():
-            Transfer(database, self.metrics).run()
+            try:
+                Transfer(database, self.metrics).run()
+                self.metrics.error.labels(database).set(0)
+            except Exception as e:
+                self.metrics.error.labels(database).set(1)
+                raise e
+
 
     def prune(self):
         # Compute date of oldest backup we need to keep
