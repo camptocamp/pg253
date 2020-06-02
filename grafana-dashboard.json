@@ -1187,7 +1187,7 @@
           "refId": "A"
         },
         {
-          "expr": "rate(current_bytes_write{database=~\"$database\"}[30s])",
+          "expr": "rate(current_bytes_read{database=~\"$database\"}[30s])",
           "interval": "",
           "legendFormat": "Read for '{{database}}'",
           "refId": "B"
@@ -1463,7 +1463,7 @@
           "refId": "A"
         },
         {
-          "expr": "rate(total_bytes_write_total[30s])",
+          "expr": "rate(total_bytes_read_total[30s])",
           "interval": "",
           "legendFormat": "Read",
           "refId": "B"
