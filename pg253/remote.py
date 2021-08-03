@@ -26,13 +26,13 @@ class Remote:
 
     @staticmethod
     def fetch(*unused):
-        for item in Remote.list():
-            if Remote.PARSE_FILENAME.search(item):
-                matches = Remote.PARSE_FILENAME.match(item)
+        for filename, size in Remote.list():
+            if Remote.PARSE_FILENAME.search(filename):
+                matches = Remote.PARSE_FILENAME.match(filename)
                 database = matches.group(1)
                 date = datetime.datetime.strptime(matches.group(2),
                                                   Remote.DATETIME_FORMAT)
-                Remote.add(database, date)
+                Remote.add(database, date, size)
 
     @staticmethod
     def list():
@@ -77,8 +77,9 @@ class Remote:
                 # print('Item: %s' % item['Key'])
                 # path = item['Key'][prefix_length:len(item['Key'])]
                 path = item['Key'][len(prefix):len(item['Key'])]
+                size = int(item['Size'])
                 if '/' not in path:
-                    yield path
+                    yield (path, size)
 
             if response.get("IsTruncated"):
                 if fetch_method == "V1":
@@ -91,11 +92,11 @@ class Remote:
                 break
 
     @staticmethod
-    def add(database, date):
+    def add(database, date, size):
         if database not in Remote.BACKUPS:
-            Remote.BACKUPS[database] = [date]
+            Remote.BACKUPS[database] = [(date, size)]
         else:
-            Remote.BACKUPS[database].append(date)
+            Remote.BACKUPS[database].append((date, size))
 
     @staticmethod
     def delete(database, date):
@@ -166,4 +167,4 @@ class Upload:
         if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
             raise Exception('Error during complete of upload  of %s'
                             % self.target)
-        Remote.add(self.database, self.start_time)
+        Remote.add(self.database, self.start_time, self.bytes_uploaded)

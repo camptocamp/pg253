@@ -69,7 +69,7 @@ class Transfer:
                         % s.output)
 
                 upload.complete()
-                self.metrics.addBackup(self.database, upload.start_time)
+                self.metrics.addBackup(self.database, upload.start_time, upload.bytes_uploaded)
                 backup_end = datetime.now()
                 self.metrics.setBackupDuration(self.database, backup_end.timestamp() - backup_start.timestamp())
                 self.metrics.refreshMetrics()

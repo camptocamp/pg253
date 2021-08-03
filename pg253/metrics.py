@@ -45,7 +45,7 @@ class Metrics:
         self.backups = (
             Gauge('backups',
                   'All backups',
-                  ['database', 'date']))
+                  ['database', 'date', 'size']))
         self.backup_duration = (
             Gauge('backup_duration',
                   'Duration of backup',
@@ -61,23 +61,23 @@ class Metrics:
         Remote.fetch()
         self.refreshMetrics()
         for database in Remote.BACKUPS:
-            for backup_datetime in Remote.BACKUPS[database]:
-                self.addBackup(database, backup_datetime)
+            for date, size in Remote.BACKUPS[database]:
+                self.addBackup(database, date, size)
 
 
     def refreshMetrics(self):
         for database in Remote.BACKUPS:
             (self.first_backup.labels(database)
-             .set(min(Remote.BACKUPS[database]).timestamp()))
+             .set(min(Remote.BACKUPS[database])[0].timestamp()))
             (self.last_backup.labels(database)
-             .set(max(Remote.BACKUPS[database]).timestamp()))
+             .set(max(Remote.BACKUPS[database])[0].timestamp()))
 
     def removeBackup(self, database, dt):
         self.backups.remove(database, dt.strftime('%Y%m%d-%H%M'))
         self.refreshMetrics()
 
-    def addBackup(self, database, dt):
-        self.backups.labels(database, dt.strftime('%Y%m%d-%H%M')).set(dt.timestamp())
+    def addBackup(self, database, date, size):
+        self.backups.labels(database, date.strftime('%Y%m%d-%H%M'), size).set(date.timestamp())
         self.refreshMetrics()
 
     def setLastBackup(self, database, backup_datetime):
