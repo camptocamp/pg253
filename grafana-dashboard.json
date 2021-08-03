@@ -290,6 +290,23 @@
           "unit": "dateTimeAsIso"
         },
         {
+          "alias": "Size",
+          "align": "auto",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "size",
+          "thresholds": [],
+          "type": "number",
+          "unit": "bytes"
+        },
+        {
           "alias": "",
           "align": "auto",
           "colorMode": null,
@@ -364,7 +381,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "backup_duration{database=~\"$database\"}",
+          "expr": "backup_duration{job=\"$job\",database=~\"$database\"}",
           "interval": "",
           "legendFormat": "{{database}}",
           "refId": "A"
@@ -541,7 +558,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total[30s])",
+          "expr": "rate(process_cpu_seconds_total{job=\"$job\"}[30s])",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -629,19 +646,19 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(python_gc_collections_total[1m]))",
+          "expr": "sum(rate(python_gc_collections_total{job=\"$job\"}[1m]))",
           "interval": "",
           "legendFormat": "collections",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(python_gc_objects_collected_total[1m]))",
+          "expr": "sum(rate(python_gc_objects_collected_total{job=\"$job\"}[1m]))",
           "interval": "",
           "legendFormat": "collected per second",
           "refId": "B"
         },
         {
-          "expr": "sum(python_gc_objects_uncollectable_total)",
+          "expr": "sum(python_gc_objects_uncollectable_total{job=\"$job\"})",
           "interval": "",
           "legendFormat": "uncollectable",
           "refId": "C"
@@ -729,7 +746,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "time() - process_start_time_seconds",
+          "expr": "time() - process_start_time_seconds{job=\"$job\"}",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -817,13 +834,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "process_resident_memory_bytes",
+          "expr": "process_resident_memory_bytes{job=\"$job\"}",
           "interval": "",
           "legendFormat": "Resident",
           "refId": "A"
         },
         {
-          "expr": "process_virtual_memory_bytes",
+          "expr": "process_virtual_memory_bytes{job=\"$job\"}",
           "interval": "",
           "legendFormat": "Virtual",
           "refId": "B"
@@ -911,7 +928,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "scrape_duration_seconds",
+          "expr": "scrape_duration_seconds{job=\"$job\"}",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -999,7 +1016,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "process_open_fds / process_max_fds",
+          "expr": "process_open_fds{job=\"$job\"} / process_max_fds{job=\"$job\"}",
           "interval": "",
           "legendFormat": "Open",
           "refId": "A"
