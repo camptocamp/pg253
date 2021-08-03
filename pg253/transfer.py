@@ -30,7 +30,9 @@ class Transfer:
 
     def run(self):
         backup_start = datetime.now()
-        input_cmd = 'pg_dump -Fc -v -d %s' % self.database
+        # Use compression level 1 to reduce CPU pressure, keep an acceptable
+        # transfer rate and reduce the size of backups to a minimum
+        input_cmd = 'pg_dump -Fc -Z1 -v -d %s' % self.database
         upload = Remote.createUpload(self.database)
         self.metrics.resetTransfer(self.database)
 
