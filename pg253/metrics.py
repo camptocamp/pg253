@@ -72,8 +72,8 @@ class Metrics:
             (self.last_backup.labels(database)
              .set(max(Remote.BACKUPS[database])[0].timestamp()))
 
-    def removeBackup(self, database, dt):
-        self.backups.remove(database, dt.strftime('%Y%m%d-%H%M'))
+    def removeBackup(self, database, date, size):
+        self.backups.remove(database, date.strftime('%Y%m%d-%H%M'), size)
         self.refreshMetrics()
 
     def addBackup(self, database, date, size):
