@@ -58,8 +58,8 @@ class Cluster:
             (datetime.now()
              - timedelta(days=float(Configuration.get('retention_days'))))
         for database in Remote.BACKUPS:
-            for to_delete in [dt for dt in Remote.BACKUPS[database]
-                              if dt < delete_before]:
-                print("Remove backup of '%s' at %s" % (database, to_delete))
-                Remote.delete(database, to_delete)
-                self.metrics.removeBackup(database, to_delete)
+            for to_delete in [backup for backup in Remote.BACKUPS[database]
+                              if backup[0] < delete_before]:
+                print("Remove backup of '%s' at %s" % (database, to_delete[0]))
+                Remote.delete(database, to_delete[0], to_delete[1])
+                self.metrics.removeBackup(database, to_delete[0], to_delete[1])

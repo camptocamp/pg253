@@ -99,7 +99,7 @@ class Remote:
             Remote.BACKUPS[database].append((date, size))
 
     @staticmethod
-    def delete(database, date):
+    def delete(database, date, size):
         # Build filename
         filename = Remote.generateKey(database, date)
 
@@ -113,7 +113,7 @@ class Remote:
                             % filename)
 
         # Update local cache
-        Remote.BACKUPS[database].remove(date)
+        Remote.BACKUPS[database].remove((date, size))
 
     @staticmethod
     def createUpload(database):
