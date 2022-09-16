@@ -13,6 +13,7 @@ class Remote:
     BACKUPS = {}
     CLIENT = boto3.client(
         's3',
+        region_name=Configuration.get('aws_s3_region_name'),
         endpoint_url=Configuration.get('aws_endpoint'),
         aws_access_key_id=Configuration.get('aws_access_key_id'),
         aws_secret_access_key=Configuration.get('aws_secret_access_key'))

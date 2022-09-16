@@ -17,6 +17,7 @@ class Configuration:
               'AWS_S3_PREFIX': '',
               'AWS_ACCESS_KEY_ID': None,
               'AWS_SECRET_ACCESS_KEY': None,
+              'AWS_S3_REGION_NAME': None
               }
 
     @staticmethod
