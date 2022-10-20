@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    {{- include "pg253.labels" . | nindent 4 }}
+  name: {{ include "pg253.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "pg253.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+  - port: metrics
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace}}

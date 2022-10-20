@@ -1,0 +1,34 @@
+####
+# Environment variable for the pod running pg253
+####
+# Access configuration to the object storage s3
+s3:
+  endpoint: https://s3.cloud.provider 
+  region_name: fr
+  bucket: offsite-backup 
+  aws_secret_access_key: "SECRET_KEY"
+  aws_access_key_id: "ACCESS_KEY" 
+# Access configuration to postgres database
+pg:
+  host: db.example.com
+  port: 5432
+  user: pgadmin
+  password: "admin_pass"
+  database: postgres
+  blacklisted_databases: "postgres|rdsadmin|rdb|template1"
+  retention_days: 15
+prometheus_exporter_port: 9352
+# Cron like definition of the frequency of execution
+schedule: "0 1 * * *"
+image:
+  repository: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3 
+  pullPolicy: IfNotPresent
+  tag: "latest"
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+

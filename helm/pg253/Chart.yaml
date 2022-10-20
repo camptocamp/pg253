@@ -1,0 +1,9 @@
+apiVersion: v2
+name: pg253
+description: |
+  This tools use `pg_dump` to backup a postgres instance and send result to object
+  storage. It focus on backuping big database with a little memory usage. It use a
+  fixed memory buffer that correspond to the multipart upload size. This tools
+  expose many through a prometheus endpoint.
+type: application
+version: 0.1.0

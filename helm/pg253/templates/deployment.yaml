@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pg253.fullname" . }}
+  labels:
+    {{- include "pg253.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "pg253.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pg253.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag}}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          ports:
+          - name: "metrics"
+            containerPort: {{ .Values.pg.prometheus_exporter_port }}
+            protocol: TCP
+          env:
+          - name: AWS_ENDPOINT
+            value: {{ .Values.s3.endpoint | quote }}
+          - name: AWS_S3_REGION_NAME
+            value: {{ .Values.s3.region_name | quote }}
+          - name: AWS_ACCESS_KEY_ID
+            value: {{ .Values.s3.aws_access_key_id | quote }} 
+          - name: AWS_S3_BUCKET
+            value: {{ .Values.s3.bucket | quote }}
+          - name: RETENTION_DAYS 
+            value: {{ .Values.pg.retention_days | quote }}
+          - name: PGHOST 
+            value: {{ .Values.pg.host | quote }}
+          - name: PGPORT
+            value: {{ .Values.pg.port | quote }}
+          - name: PGUSER 
+            value: {{ .Values.pg.user | quote }}
+          - name: PGDATABASE 
+            value: {{ .Values.pg.database | quote }}
+          - name: SCHEDULE 
+            value: {{ .Values.schedule | quote }}
+          - name: BLACKLISTED_DATABASES 
+            value: {{ .Values.pg.blacklisted_databases | quote }}
+          envFrom:
+            - secretRef:
+              name: {{ include "pg253.fullname" . }}
+          securityContext:
+            capabilities:
+              drop:
+              - ALL
+      securityContext: runAsUser
+      automountServiceAccountToken: false
