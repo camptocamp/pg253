@@ -48,7 +48,7 @@ spec:
             value: {{ .Values.pg.blacklisted_databases | quote }}
           envFrom:
             - secretRef:
-              name: {{ include "pg253.fullname" . }}
+                name: {{ include "pg253.fullname" . }}
           securityContext:
             capabilities:
               drop:
