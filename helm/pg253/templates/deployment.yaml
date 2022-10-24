@@ -53,6 +53,4 @@ spec:
             capabilities:
               drop:
               - ALL
-      securityContext: 
-        runAsNonRoot: true
       automountServiceAccountToken: false
