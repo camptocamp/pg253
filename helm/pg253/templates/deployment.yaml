@@ -21,7 +21,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           ports:
           - name: "metrics"
-            containerPort: {{ .Values.pg.prometheus_exporter_port }}
+            containerPort: {{ .Values.prometheus_exporter_port }}
             protocol: TCP
           env:
           - name: AWS_ENDPOINT
@@ -53,5 +53,6 @@ spec:
             capabilities:
               drop:
               - ALL
-      securityContext: runAsUser
+      securityContext: 
+        runAsNonRoot: true
       automountServiceAccountToken: false
