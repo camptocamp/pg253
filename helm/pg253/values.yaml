@@ -17,6 +17,7 @@ pg:
   database: postgres
   blacklisted_databases: "postgres|rdsadmin|rdb|template1"
   retention_days: 15
+  # buffer_size: default to 10*1024*1024 (10Mb) 
 prometheus_exporter_port: 9352
 # Cron like definition of the frequency of execution
 schedule: "0 1 * * *"
