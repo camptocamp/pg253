@@ -558,7 +558,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total{job=\"$job\"}[30s])",
+          "expr": "rate(process_cpu_seconds_total{job=\"$job\"}[2m])",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -1198,13 +1198,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(current_bytes_write{database=~\"$database\"}[30s])",
+          "expr": "rate(current_bytes_write{database=~\"$database\"}[2m])",
           "interval": "",
           "legendFormat": "Write for '{{database}}'",
           "refId": "A"
         },
         {
-          "expr": "rate(current_bytes_read{database=~\"$database\"}[30s])",
+          "expr": "rate(current_bytes_read{database=~\"$database\"}[2m])",
           "interval": "",
           "legendFormat": "Read for '{{database}}'",
           "refId": "B"
@@ -1474,13 +1474,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(total_bytes_write_total[30s])",
+          "expr": "rate(total_bytes_write_total[2m])",
           "interval": "",
           "legendFormat": "Write",
           "refId": "A"
         },
         {
-          "expr": "rate(total_bytes_read_total[30s])",
+          "expr": "rate(total_bytes_read_total[2m])",
           "interval": "",
           "legendFormat": "Read",
           "refId": "B"
@@ -1560,6 +1560,23 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "definition": "label_values(backups, job)",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "job",
+        "options": [],
+        "query": {
+          "query": "label_values(backups, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
       }
     ]
   },
