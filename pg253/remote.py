@@ -2,7 +2,6 @@ import re
 import datetime
 
 import boto3
-from botocore.errorfactory import NoSuchUpload
 
 from pg253.configuration import Configuration
 
@@ -162,7 +161,7 @@ class Upload:
             if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
                 raise Exception('Error during abort of upload  of %s'
                                 % self.target)
-        except NoSuchUpload:
+        except Remote.CLIENT.exceptions.NoSuchUpload:
             pass
 
     def complete(self):
