@@ -2,6 +2,7 @@ import re
 import datetime
 
 import boto3
+from botocore.errorfactory import NoSuchUpload
 
 from pg253.configuration import Configuration
 
@@ -155,11 +156,14 @@ class Upload:
         return res
 
     def abort(self):
-        res = Remote.CLIENT.abort_multipart_upload(**self.target,
-                                                   UploadId=self.upload_id)
-        if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
-            raise Exception('Error during abort of upload  of %s'
-                            % self.target)
+        try:
+            res = Remote.CLIENT.abort_multipart_upload(**self.target,
+                                                       UploadId=self.upload_id)
+            if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
+                raise Exception('Error during abort of upload  of %s'
+                                % self.target)
+        except NoSuchUpload:
+            pass
 
     def complete(self):
         res = Remote.CLIENT.complete_multipart_upload(**self.target,
