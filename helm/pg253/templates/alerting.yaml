@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "pg253.fullname" . }}
+  labels:
+    {{- include "pg253.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: pg253
+      rules:
+        - alert: PG253BackupError
+          expr: error{container="pg253"}
+          labels:
+            severity: Critical
+          annotations:
+            description: |
+              Backup failed for database {{`{{$labels.database}}`}} on Pod {{`{{$labels.pod}}`}}
+            summary: 'Backup failed: {{`{{$labels.name}}`}}'
