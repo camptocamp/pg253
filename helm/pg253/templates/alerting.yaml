@@ -9,7 +9,7 @@ spec:
     - name: pg253
       rules:
         - alert: PG253BackupError
-          expr: error{container="pg253"}
+          expr: error{container="pg253"} > 0
           labels:
             severity: Critical
           annotations:
