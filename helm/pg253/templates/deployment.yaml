@@ -34,6 +34,7 @@ spec:
             value: {{ .Values.s3.bucket | quote }}
           - name: RETENTION_DAYS 
             value: {{ .Values.pg.retention_days | quote }}
+          {{- if not .Values.pg.secret_name }}
           - name: PGHOST 
             value: {{ .Values.pg.host | quote }}
           - name: PGPORT
@@ -42,6 +43,7 @@ spec:
             value: {{ .Values.pg.user | quote }}
           - name: PGDATABASE 
             value: {{ .Values.pg.database | quote }}
+          {{- end }}
           - name: SCHEDULE 
             value: {{ .Values.schedule | quote }}
           - name: BLACKLISTED_DATABASES 
@@ -53,6 +55,10 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "pg253.fullname" . }}
+            {{- with .Values.pg.secret_name }}
+            - secretRef:
+                name: {{ . | quote }}
+            {{- end }}
           securityContext:
             capabilities:
               drop:
