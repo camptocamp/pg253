@@ -2,7 +2,7 @@
 version: '3'
 services:
   postgres-to-s3:
-    image: camptocamp/postgres-backup-to-s3:latest
+    image: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3:latest
     build: ./
     tty: true
     restart: on-failure
@@ -11,6 +11,7 @@ services:
       AWS_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: AKIAACCESSKEY
       AWS_SECRET_ACCESS_KEY: SECRETSECRET
+      AWS_S3_REGION_NAME: local
       #AWS_DEFAULT_REGION: eu-west-1
       AWS_S3_BUCKET: postgres-to-s3
       BLACKLISTED_DATABASES: .*backup.*|postgres|rdsadmin

@@ -12,6 +12,9 @@ spec:
     metadata:
       labels:
         {{- include "pg253.labels" . | nindent 8 }}
+        {{- with .Values.metricsLabels }}
+          {{- toYaml .Values.metricsLabels | nindent 8 }}
+        {{- end }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -29,24 +32,24 @@ spec:
           - name: AWS_S3_REGION_NAME
             value: {{ .Values.s3.region_name | quote }}
           - name: AWS_ACCESS_KEY_ID
-            value: {{ .Values.s3.aws_access_key_id | quote }} 
+            value: {{ .Values.s3.aws_access_key_id | quote }}
           - name: AWS_S3_BUCKET
             value: {{ .Values.s3.bucket | quote }}
-          - name: RETENTION_DAYS 
+          - name: RETENTION_DAYS
             value: {{ .Values.pg.retention_days | quote }}
           {{- if not .Values.pg.secret_name }}
-          - name: PGHOST 
+          - name: PGHOST
             value: {{ .Values.pg.host | quote }}
           - name: PGPORT
             value: {{ .Values.pg.port | quote }}
-          - name: PGUSER 
+          - name: PGUSER
             value: {{ .Values.pg.user | quote }}
-          - name: PGDATABASE 
+          - name: PGDATABASE
             value: {{ .Values.pg.database | quote }}
           {{- end }}
-          - name: SCHEDULE 
+          - name: SCHEDULE
             value: {{ .Values.schedule | quote }}
-          - name: BLACKLISTED_DATABASES 
+          - name: BLACKLISTED_DATABASES
             value: {{ .Values.pg.blacklisted_databases | quote }}
           {{- if .Values.pg.buffer_size }}
           - name: BUFFER_SIZE

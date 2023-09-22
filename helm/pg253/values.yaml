@@ -3,11 +3,11 @@
 ####
 # Access configuration to the object storage s3
 s3:
-  endpoint: https://s3.cloud.provider 
+  endpoint: https://s3.cloud.provider
   region_name: fr
-  bucket: offsite-backup 
+  bucket: offsite-backup
   aws_secret_access_key: "SECRET_KEY"
-  aws_access_key_id: "ACCESS_KEY" 
+  aws_access_key_id: "ACCESS_KEY"
 # Access configuration to postgres database
 pg:
   host: db.example.com
@@ -20,12 +20,13 @@ pg:
   # secret_name: "my_secret"
   blacklisted_databases: "postgres|rdsadmin|rdb|template1"
   retention_days: 15
-  # buffer_size: default to 10*1024*1024 (10Mb) 
+  # buffer_size: default to 10*1024*1024 (10Mb)
 prometheus_exporter_port: 9352
 # Cron like definition of the frequency of execution
 schedule: "0 1 * * *"
+metricsLabels: {}
 image:
-  repository: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3 
+  repository: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3
   pullPolicy: IfNotPresent
   tag: "latest"
 resources:
@@ -35,4 +36,3 @@ resources:
   requests:
     cpu: 100m
     memory: 128Mi
-
