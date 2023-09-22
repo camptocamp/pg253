@@ -6,4 +6,4 @@ description: |
   fixed memory buffer that correspond to the multipart upload size. This tools
   expose many through a prometheus endpoint.
 type: application
-version: 0.6.1
+version: 0.6.2

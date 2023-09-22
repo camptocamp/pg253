@@ -16,6 +16,6 @@ spec:
   {{- with .Values.metricsLabels }}
   podTargetLabels:
   {{- range $key, $val := . }}
-  - {{ . }}
+  - {{ $key }}
   {{- end }}
   {{- end }}
