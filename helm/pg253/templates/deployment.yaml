@@ -13,7 +13,7 @@ spec:
       labels:
         {{- include "pg253.labels" . | nindent 8 }}
         {{- with .Values.metricsLabels }}
-          {{- toYaml .Values.metricsLabels | nindent 8 }}
+          {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       containers:
