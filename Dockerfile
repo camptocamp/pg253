@@ -28,7 +28,7 @@ COPY . /usr/src/
 RUN pyinstaller --onefile main.py
 
 # Build final image
-FROM postgres:13
+FROM postgres:15
 
 COPY --from=builder /usr/src/dist/main /usr/bin/pg253
 RUN apt-get update && \

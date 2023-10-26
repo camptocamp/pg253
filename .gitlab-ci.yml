@@ -1,7 +1,7 @@
 # This file is a template, and might need editing before it works on your project.
 variables:
-  DOCKER: "false"
-  HELM: "true"
+  DOCKER: "true"
+  HELM: "false"
 
 docker-build-master:
   # Official docker image.
