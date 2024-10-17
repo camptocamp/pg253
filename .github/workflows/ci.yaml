@@ -1,0 +1,71 @@
+---
+name: Build PG253 images
+
+on:
+  # trigger every sunday morning
+  schedule:
+    - cron: "2 2 * * SUN"
+  # trigger on PR merge and push to main branch
+  push:
+    branches:
+      - main
+  # trigger on PR
+  pull_request:
+    types: [opened, synchronize, labeled]
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push to ghcr
+        run: |
+          docker build -t ghcr.io/camptocamp/pg253:latest \
+            --pull --no-cache \
+            --label GIT_COMMIT=$(git rev-parse HEAD) .
+          docker push ghcr.io/camptocamp/pg253:latest
+          TAG="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
+          docker tag ghcr.io/camptocamp/pg253:latest ghcr.io/camptocamp/pg253:${TAG}
+          docker push ghcr.io/camptocamp/pg253:${TAG}
+
+  build-on-pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check if "build" label is present
+        id: label-check
+        uses: actions-ecosystem/action-get-labeled@v1
+        with:
+          label: 'build'
+
+      - name: Log in to GitHub Container Registry
+        if: steps.label-check.outputs.labeled == 'true'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push to ghcr
+        if: steps.label-check.outputs.labeled == 'true'
+        run: |
+          TAG="pr-${{ github.event.pull_request.number }}-$(git rev-parse --short HEAD)"
+          docker build -t ghcr.io/camptocamp/pg253:${TAG} \
+            --pull --no-cache \
+            --label GIT_COMMIT=$(git rev-parse HEAD) .
+          docker push ghcr.io/camptocamp/pg253:${TAG}
+
+      - name: Build only
+        if: steps.label-check.outputs.labeled != 'true'
+        run: |
+          docker build --pull --no-cache .
