@@ -1,27 +1,16 @@
 # Build exporter
-FROM centos:7 AS builder
+FROM debian:bookworm AS builder
 
 WORKDIR /usr/src/
 
 
 # Install python
-ADD https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz  /usr/src/
-RUN yum -y install curl make gcc openssl-devel bzip2-devel libffi-devel
-RUN tar xzf Python-3.7.5.tgz && \
-    rm -fr Python-3.7.5.tgz && \
-    cd Python-3.7.5 && \
-    ./configure --prefix=/usr --enable-optimizations --enable-shared && \
-    make install -j 8 && \
-    cd .. && \
-    rm -fr Python-3.7.5 && \
-    ldconfig && \
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python3 get-pip.py
+RUN apt-get update && apt-get install -y python3 python3-pip
 
 # Install dependencies
 COPY requirements.txt /usr/src/
-RUN pip3 install -r requirements.txt
-RUN pip3 install pyinstaller
+RUN pip3 install --break-system-packages -r requirements.txt
+RUN pip3 install --break-system-packages pyinstaller
 
 # Build a one file executable
 COPY . /usr/src/
