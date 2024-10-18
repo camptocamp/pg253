@@ -11,7 +11,7 @@ on:
       - main
   # trigger on PR
   pull_request:
-    types: [opened, synchronize, labeled]
+    types: [opened, reopened, synchronize, labeled]
     branches:
       - main
 
@@ -59,7 +59,8 @@ jobs:
             --label GIT_COMMIT=$(git rev-parse HEAD) .
           docker push ghcr.io/camptocamp/pg253:${TAG}
 
-      - uses: actions/github-script@v7
+      - name: Comment PR
+        uses: actions/github-script@v7
         if: ${{ contains( github.event.pull_request.labels.*.name, 'build')  }}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -68,10 +69,10 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "A docker image was successfully build for your Pull Request: `ghcr.io/camptocamp/pg253:${TAG}`"
+              body: "A docker image was successfully build for your Pull Request: `ghcr.io/camptocamp/pg253:${{ env.TAG }}`"
             })
 
       - name: Build only
-        if: ${{ not contains( github.event.pull_request.labels.*.name, 'build')  }}
+        if: ${{ ! contains( github.event.pull_request.labels.*.name, 'build')  }}
         run: |
           docker build --pull --no-cache .
