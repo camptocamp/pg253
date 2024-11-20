@@ -11,7 +11,7 @@ spec:
         - alert: PG253BackupError
           expr: error{container="pg253"} > 0
           labels:
-            severity: Critical
+            severity: warning
           annotations:
             description: |
               Backup failed for database {{`{{$labels.database}}`}} on Pod {{`{{$labels.pod}}`}}
