@@ -67,10 +67,20 @@ class Metrics:
 
     def refreshMetrics(self):
         for database in Remote.BACKUPS:
-            (self.first_backup.labels(database)
-             .set(min(Remote.BACKUPS[database], default=0)[0].timestamp()))
-            (self.last_backup.labels(database)
-             .set(max(Remote.BACKUPS[database], default=0)[0].timestamp()))
+            if len(Remote.BACKUPS[database]) > 0:
+                (self.first_backup.labels(database)
+                 .set(min(Remote.BACKUPS[database], default=[])[0].timestamp()))
+                (self.last_backup.labels(database)
+                 .set(max(Remote.BACKUPS[database], default=[])[0].timestamp()))
+            else:
+                try:
+                    self.first_backup.remove(database)
+                except KeyError:
+                    pass # Metric may not exists
+                try:
+                    self.last_backup.remove(database)
+                except KeyError:
+                    pass # Metric may not exists
 
     def removeBackup(self, database, date, size):
         self.backups.remove(database, date.strftime('%Y%m%d-%H%M'), size)
