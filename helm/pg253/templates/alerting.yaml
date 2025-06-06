@@ -1,3 +1,4 @@
+{{- if .Values.monitoring.defaultAlertingRules.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -16,3 +17,4 @@ spec:
             description: |
               Backup failed for database {{`{{$labels.database}}`}} on Pod {{`{{$labels.pod}}`}}
             summary: 'Backup failed: {{`{{$labels.name}}`}}'
+{{- end }}
