@@ -36,3 +36,11 @@ resources:
   requests:
     cpu: 100m
     memory: 128Mi
+
+monitoring:
+  defaultGrafanaDashboards:
+    enabled: true
+  defaultAlertingRules:
+    enabled: true
+  podMonitor:
+    enabled: true
