@@ -36,6 +36,7 @@ Optional variables:
   deleted. Default to `15`.
 * `BUFFER_SIZE`: Size of the main buffer, this parameter affect backup speed and
   memory usage. Default to `10 MB`.
+* `ENCRYPTION_PASSPHRASE`: Passphrase used to encrypt the backups with GPG. If omitted, encryption is disabled. Default to `""`.
 
 ## Target configuration
 
@@ -53,3 +54,13 @@ Optional variables:
 ## Monitoring
 
 * `PROMETHEUS_EXPORTER_PORT`: prometheus endpoint port. Default to `9352`
+
+# Encryption / Decryption
+
+PG253 allows you to symmetrically encrypt your backups with GPG. To enable this feature, you must configure the environment variable `ENCRYPTION_PASSPHRASE`. If omitted, backups will not be encrypted.
+
+To restore an encrypted backup, you must first decrypt it with a standard GPG binary:
+
+```bash
+gpg --output mydatabase.dump --decrypt mydatabase-encrypted.dump
+```
