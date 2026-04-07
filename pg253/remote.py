@@ -20,10 +20,14 @@ class Remote:
 
     @staticmethod
     def generateKey(database, dt=datetime.datetime.now()):
-        return ('%spostgres.%s.%s.dump'
+        key_suffix = ""
+        if Configuration.get('encryption_passphrase') != '':
+            key_suffix = ".gpg"
+        return ('%spostgres.%s.%s.dump%s'
                 % (Configuration.get('aws_s3_prefix'),
                    database,
-                   dt.strftime('%Y%m%d-%H%M')))
+                   dt.strftime('%Y%m%d-%H%M'),
+                   key_suffix))
 
     @staticmethod
     def fetch(*unused):

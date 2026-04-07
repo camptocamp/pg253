@@ -17,7 +17,8 @@ class Configuration:
               'AWS_S3_PREFIX': '',
               'AWS_ACCESS_KEY_ID': None,
               'AWS_SECRET_ACCESS_KEY': None,
-              'AWS_S3_REGION_NAME': None
+              'AWS_S3_REGION_NAME': None,
+              'ENCRYPTION_PASSPHRASE': ''
               }
 
     @staticmethod
@@ -59,4 +60,6 @@ class Configuration:
         res += "\tAccess Key: %s\n" % Configuration.get('aws_access_key_id')
         res += ("\tSecret Key : %s\n"
                 % ('X' * len(Configuration.get('aws_secret_access_key'))))
+        res += ("\tEncryption passphrase: %s\n"
+                % ('X' * len(Configuration.get('encryption_passphrase'))))
         return res
