@@ -1,81 +1,178 @@
 ---
-version: '3'
 services:
-  postgres-to-s3:
-    image: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3:latest
-    build: ./
+  pg253:
+    build: .
     tty: true
-    restart: on-failure
     environment:
       SCHEDULE: '* * * * *'
-      AWS_ENDPOINT: http://minio:9000
-      AWS_ACCESS_KEY_ID: AKIAACCESSKEY
-      AWS_SECRET_ACCESS_KEY: SECRETSECRET
-      AWS_S3_REGION_NAME: local
-      #AWS_DEFAULT_REGION: eu-west-1
-      AWS_S3_BUCKET: postgres-to-s3
+      AWS_ENDPOINT: http://garage:3900
+      AWS_ACCESS_KEY_ID: GK3515373e4c851ebaad366558
+      AWS_SECRET_ACCESS_KEY: 7d37d093435a41f2aab8f13c19ba067d9776c90215f56614adad6ece597dbb34
+      AWS_S3_REGION_NAME: garage
+      AWS_S3_BUCKET: pgbackups
       BLACKLISTED_DATABASES: .*backup.*|postgres|rdsadmin
       PGHOST: postgres
       PGPASSWORD: pgpass
-      PGUSER: postgres
+      PGUSER: pguser
 
   postgres:
-    image: camptocamp/postgres:12
-    # synchronous_commit = off, fsync = off
-    command: -c 'synchronous_commit=off' -c 'fsync=off'
+    image: postgres:16
     environment:
       POSTGRES_PASSWORD: pgpass
-      POSTGRES_USER: postgres
+      POSTGRES_USER: pguser
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./scripts/dev/seed.sql:/seed.sql:ro
 
-  minio:
-    # Limit bandwidth with: tc qdisc add dev br-577ead7e585d root tbf rate 1000kbps latency 50ms burst 2500
-    image: minio/minio
-    #entrypoint: ""
-    #command: sh
-    #tty: true
-    #stdin_open: true
-    command: server /data
+  garage:
+    image: dxflrs/garage:v2.2.0
+    environment:
+      GARAGE_ADMIN_TOKEN: garage-admin-token
+    configs:
+      - source: garage-config
+        target: /etc/garage.toml
     volumes:
-      - minio:/data
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
     ports:
-      - "9000:9000"
-    environment:
-      MINIO_ACCESS_KEY: AKIAACCESSKEY
-      MINIO_SECRET_KEY: SECRETSECRET
+      - "3900:3900"
 
-  create-bucket:
-    image: amazon/aws-cli
-    entrypoint: /create-bucket-entrypoint.sh
-    stop_signal: SIGKILL
-    volumes:
-      - ./create-bucket-entrypoint.sh:/create-bucket-entrypoint.sh
+  garage-init:
+    image: docker.io/alpine:3.23
+    depends_on:
+      garage:
+        condition: service_started
     environment:
-      MINIO_URL: http://minio:9000
-      BUCKET: postgres-to-s3
-      AWS_ACCESS_KEY_ID: AKIAACCESSKEY
-      AWS_SECRET_ACCESS_KEY: SECRETSECRET
+      GARAGE_ADMIN_TOKEN: garage-admin-token
+    pid: service:garage
+    network_mode: service:garage
+    entrypoint:
+      - /bin/sh
+      - -eux
+      - -c
+      - |
+        # chroot into the s3 container's filesystem so the garage binary runs
+        # with its own libs/linker, while the shared network namespace keeps
+        # 127.0.0.1:3901 pointing at the live Garage server
+        G="chroot /proc/1/root /garage -c /etc/garage.toml"
+
+        # Wait for server
+        for i in $$(seq 1 20); do
+          if $$G node id -q 2>/dev/null; then break; fi
+          echo "Waiting for Garage RPC... ($$i/20)"
+          sleep 3
+        done
+        $$G node id -q || { echo "Garage RPC not ready"; exit 1; }
+
+        # Init garage nodes
+        if $$G status 2>&1 | grep -q 'NO ROLE ASSIGNED'; then
+          NODE_ID=$$($$G node id -q | cut -c1-16)
+          $$G layout assign "$$NODE_ID" -z garage -c 1G
+          $$G layout apply --version 1
+        fi
+
+        # Create S3 bucket
+        $$G key import --yes -n pg253 \
+          GK3515373e4c851ebaad366558 \
+          7d37d093435a41f2aab8f13c19ba067d9776c90215f56614adad6ece597dbb34 || true
+        $$G bucket create pgbackups || true
+        $$G bucket allow pgbackups --key pg253 --read --write --owner || true
+
+        echo "Garage initialized."
 
   # Observability
   prometheus:
     image: prom/prometheus
+    configs:
+      - source: prometheus-config
+        target: /etc/prometheus/prometheus.yml
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus:/prometheus
     ports:
       - "9090:9090"
+
   grafana:
-    image: grafana/grafana:6.7.3
+    image: grafana/grafana:12.4.2
+    configs:
+      - source: grafana-datasources
+        target: /etc/grafana/provisioning/datasources/datasources.yml
+      - source: grafana-dashboards
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
     volumes:
-      - ./grafana-data/:/var/lib/grafana
+      - ./contrib/grafana-dashboards/pg253.json:/var/lib/grafana/dashboards/pg253.json:ro
+      - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
 
+configs:
+  garage-config:
+    content: |
+      metadata_dir = "/var/lib/garage/meta"
+      data_dir = "/var/lib/garage/data"
+      db_engine = "sqlite"
+
+      replication_factor = 1
+      compression_level = 1
+
+      rpc_bind_addr = "[::]:3901"
+      rpc_public_addr = "127.0.0.1:3901"
+      rpc_secret = "5cd97ac1a44303475d5eab42378aa729eda15164c898eaac84116bcdfe85cddd"
+
+      [s3_api]
+      s3_region = "garage"
+      api_bind_addr = "[::]:3900"
+
+  prometheus-config:
+    content: |
+      global:
+        scrape_interval: 5s
+        scrape_timeout: 4s
+        evaluation_interval: 1m
+      scrape_configs:
+      - job_name: pg253
+        honor_timestamps: true
+        scrape_interval: 5s
+        scrape_timeout: 4s
+        metrics_path: /metrics
+        scheme: http
+        static_configs:
+        - targets:
+          - pg253:9352
+          labels:
+            pg253: "true"
+
+  grafana-datasources:
+    content: |
+      datasources:
+      - name: Prometheus
+        access: proxy
+        type: prometheus
+        url: http://prometheus:9090
+        isDefault: true
+  grafana-dashboards:
+    content: |
+      apiVersion: 1
+      providers:
+        - name: "PG253"
+          orgId: 1
+          type: file
+          disableDeletion: false
+          updateIntervalSeconds: 10
+          allowUiUpdates: false
+          options:
+            path: /var/lib/grafana/dashboards
+            foldersFromFilesStructure: true
+
 volumes:
-    pgdata:
-    minio:
-    prometheus:
+  pgdata:
+  minio:
+  prometheus:
+  grafana_data:
+  garage_meta:
+  garage_data:
+
+networks:
+  default:
+    enable_ipv6: true
