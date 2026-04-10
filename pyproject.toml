@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pg253"
+version = "2.0.0"
+license = "Apache-2.0"
+description = "PG253 : Backup tools for DB As A Service like AWS RDS"
+authors = [
+    {name = "Julien Acroute", email = "julien.acroute@camptocamp.com"},
+    {name = "Léo Depriester", email = "leo.depriester@camptocamp.com"},
+]
+maintainers = [
+    {name = "Julien Acroute", email = "julien.acroute@camptocamp.com"},
+    {name = "Léo Depriester", email = "leo.depriester@camptocamp.com"},
+]
+readme = "README.md"
+
+[project.scripts]
+pg253 = "pg253.cli:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
