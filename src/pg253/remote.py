@@ -1,6 +1,7 @@
 import re
-import datetime
+from datetime import datetime
 from dataclasses import dataclass
+from botocore.client import BaseClient
 import boto3
 
 
@@ -10,7 +11,7 @@ PARSE_FILENAME = re.compile(r'postgres.([^\.]+).([^\.]+).dump($|.gpg)')
 @dataclass
 class Backup:
     database: str
-    dt: datetime.datetime
+    dt: datetime
     size: int
     path: str
 
@@ -22,7 +23,7 @@ class S3Remote:
     secret_key: str
     bucket: str
     path_prefix: str
-    client: None
+    client: BaseClient = None
 
     def __post_init__(self):
         self.client = boto3.client(
@@ -117,7 +118,7 @@ class S3Remote:
                 break
 
     """ Delete backup from the S3 remote bucket """
-    def delete_backup(backup):
+    def delete_backup(self, backup):
         res = self.client.delete_object(
             Bucket=self.bucket,
             Key=backup.path,
@@ -127,8 +128,8 @@ class S3Remote:
                             % backup.path)
 
     """ Returns an Upload object that manages multipart uploads """
-    def start_upload(database):
-        now = datetime.datetime.now()
+    def start_upload(self, database):
+        now = datetime.now()
         path = self.generate_filename(database, dt=now)
         return Upload(self, database, now, self.bucket, path)
 
