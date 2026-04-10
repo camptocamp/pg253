@@ -13,7 +13,7 @@ setup(
     author_email="julien.acroute@camptocamp.com",
     entry_points={
         'console_scripts': [
-            'pg253 = main:main',
+            'pg253 = pg253.cli:app',
         ],
     },
     license="Apache 2",

@@ -10,7 +10,7 @@ from pg253.configuration import Configuration
 from pg253.remote import Remote
 
 
-def main():
+def app():
     print(Configuration.str())
     metrics = Metrics()
     cluster = Cluster(metrics)
@@ -28,7 +28,3 @@ def main():
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
         pass
-
-
-if __name__ == '__main__':
-    main()
