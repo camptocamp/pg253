@@ -3,16 +3,16 @@ from datetime import datetime, timedelta
 from subprocess import run
 
 from pg253.transfer import Transfer
-from pg253.remote import Remote
 from pg253.configuration import Configuration
 
 
 class Cluster:
-    def __init__(self, metrics):
+    def __init__(self, metrics, remote):
         self.running = False
         self.metrics = metrics
         self.db_exclude = \
             re.compile(Configuration.get('blacklisted_databases'))
+        self.remote = remote
 
     def listDatabase(self):
         cmd = ['psql', '-qAtX', '-c', 'SELECT datname FROM pg_database']
@@ -45,21 +45,16 @@ class Cluster:
     def backup(self):
         for database in self.listDatabase():
             try:
-                Transfer(database, self.metrics).run()
+                Transfer(database, self.metrics, self.buffer_size).run()
                 self.metrics.error.labels(database).set(0)
             except Exception as e:
                 self.metrics.error.labels(database).set(1)
                 raise e
 
 
-    def prune(self):
-        # Compute date of oldest backup we need to keep
-        delete_before = \
-            (datetime.now()
-             - timedelta(days=float(Configuration.get('retention_days'))))
-        for database in Remote.BACKUPS:
-            for to_delete in [backup for backup in Remote.BACKUPS[database]
-                              if backup[0] < delete_before]:
-                print("Remove backup of '%s' at %s" % (database, to_delete[0]))
-                Remote.delete(database, to_delete[0], to_delete[1])
+    def prune(self, retention):
+        for backup in self.remote.fetch_backups():
+            if backup.dt + timedelta(days=retention) < datetime.now():
+                print("Remove backup of '%s' at %s" % (backup.database, backup.dt))
+                self.remote.delete_backup(backup)
                 self.metrics.removeBackup(database, to_delete[0], to_delete[1])

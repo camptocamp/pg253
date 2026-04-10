@@ -4,12 +4,12 @@ import datetime
 from prometheus_client import start_http_server
 from prometheus_client import Gauge, Counter
 
-from pg253.remote import Remote
 from pg253.configuration import Configuration
 
 
 class Metrics:
-    def __init__(self):
+    def __init__(self, remote):
+        self.remote = remote
         self.current_read = {}
         self.current_write = {}
 
@@ -58,29 +58,24 @@ class Metrics:
 
 
     def _readRemoteBackup(self):
-        Remote.fetch()
         self.refreshMetrics()
-        for database in Remote.BACKUPS:
-            for date, size in Remote.BACKUPS[database]:
-                self.addBackup(database, date, size)
+        for backup in self.remote.fetch_backups():
+            self.addBackup(backup.database, backup.dt, backup.size)
 
 
     def refreshMetrics(self):
-        for database in Remote.BACKUPS:
-            if len(Remote.BACKUPS[database]) > 0:
-                (self.first_backup.labels(database)
-                 .set(min(Remote.BACKUPS[database], default=[])[0].timestamp()))
-                (self.last_backup.labels(database)
-                 .set(max(Remote.BACKUPS[database], default=[])[0].timestamp()))
+        self.first_backup.clear()
+        self.last_backup.clear()
+        backup_dates_per_db = {}
+        for backup in self.remote.fetch_backups():
+            if backup.database in backup_dates_per_db:
+                backup_dates_per_db[backup.database].append(backup.dt)
             else:
-                try:
-                    self.first_backup.remove(database)
-                except KeyError:
-                    pass # Metric may not exists
-                try:
-                    self.last_backup.remove(database)
-                except KeyError:
-                    pass # Metric may not exists
+                backup_dates_per_db[backup.database] = [backup.dt]
+
+        for database, backup_dates in backup_dates_per_db.items():
+            self.first_backup.labels(database).set(min(backup_dates).timestamp())
+            self.last_backup.labels(database).set(max(backup_dates).timestamp())
 
     def removeBackup(self, database, date, size):
         self.backups.remove(database, date.strftime('%Y%m%d-%H%M'), size)

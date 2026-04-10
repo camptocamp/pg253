@@ -2,7 +2,6 @@ from subprocess import Popen, PIPE
 from datetime import datetime
 from threading import Thread
 
-from pg253.remote import Remote
 from pg253.configuration import Configuration
 from pg253.utils import sizeof_fmt
 
@@ -21,19 +20,19 @@ class StdErr(Thread):
 
 
 class Transfer:
-    def __init__(self, database, metrics):
+    def __init__(self, database, metrics, buffer_size, s3_remote):
         self.database = database
         self.metrics = metrics
-        self.buffer_size = int(Configuration.get('buffer_size'))
+        self.buffer_size = buffer_size
         self.buffer = bytearray(self.buffer_size)
-        self.key = Remote.generateKey(database)
+        self.s3_remote = s3_remote
 
     def run(self):
         backup_start = datetime.now()
         # Use compression level 1 to reduce CPU pressure, keep an acceptable
         # transfer rate and reduce the size of backups to a minimum
         input_cmd = 'pg_dump -Fc -Z1 -v -d %s' % self.database
-        upload = Remote.createUpload(self.database)
+        upload = self.s3_remote.start_upload(self.database)
         self.metrics.resetTransfer(self.database)
 
         print("Begin backup of '%s' database to %s/%s"
