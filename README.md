@@ -27,7 +27,7 @@ At least following variables must be defined:
 
 Optional variables:
 
-* `BLACKLISTED_DATABASES`: Regexp to exclude databases. Default to
+* `EXCLUDE_DATABASES`: Regexp to exclude databases. Default to
   `.*backup.*|postgres|rdsadmin`
 
 ## Backup configuration
@@ -41,7 +41,7 @@ Optional variables:
 
 The following variables are mandatory:
 
-* `AWS_ENDPOINT`: Object storage endpoint, example `http://minio:9000`
+* `AWS_ENDPOINT_URL`: Object storage endpoint, example `http://minio:9000`
 * `AWS_S3_BUCKET`: Bucket name
 * `AWS_ACCESS_KEY_ID`
 * `AWS_SECRET_ACCESS_KEY`
@@ -52,4 +52,4 @@ Optional variables:
 
 ## Monitoring
 
-* `PROMETHEUS_EXPORTER_PORT`: prometheus endpoint port. Default to `9352`
+* `METRICS_PORT`: prometheus endpoint port. Default to `9352`

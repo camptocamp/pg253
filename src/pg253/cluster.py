@@ -1,20 +1,20 @@
 import re
 from datetime import datetime, timedelta
 from subprocess import run
-
+from dataclasses import dataclass
 from pg253.transfer import Transfer
-from pg253.configuration import Configuration
+from pg253.metrics import Metrics
+from pg253.remote import S3Remote
 
 
+@dataclass
 class Cluster:
-    def __init__(self, metrics, remote):
-        self.running = False
-        self.metrics = metrics
-        self.db_exclude = \
-            re.compile(Configuration.get('blacklisted_databases'))
-        self.buffer_size = int(Configuration.get('BUFFER_SIZE'))
-        self.retention_days = int(Configuration.get('RETENTION_DAYS'))
-        self.remote = remote
+    metrics: Metrics
+    remote: S3Remote
+    db_exclude: str
+    buffer_size: int
+    retention_days: int
+    running: bool = False
 
     def listDatabase(self):
         cmd = ['psql', '-qAtX', '-c', 'SELECT datname FROM pg_database']
@@ -23,7 +23,7 @@ class Cluster:
             raise Exception('Unable to retrieve database list: %s'
                             % res.stderr.decode())
         dbs = res.stdout.decode().strip().split("\n")
-        dbs = list(filter(lambda x: not self.db_exclude.search(x), dbs))
+        dbs = list(filter(lambda x: not re.search(self.db_exclude, x), dbs))
         return dbs
 
     def backup_and_prune(self, *unused):

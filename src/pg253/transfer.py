@@ -2,8 +2,8 @@ from subprocess import Popen, PIPE
 from datetime import datetime
 from threading import Thread
 
-from pg253.configuration import Configuration
 from pg253.utils import sizeof_fmt
+
 
 class StdErr(Thread):
     def __init__(self, stream):

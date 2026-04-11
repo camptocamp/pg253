@@ -1,5 +1,6 @@
 """ Module to run integration tests """
 
+import sys
 import os
 import re
 from unittest.mock import patch
@@ -37,19 +38,19 @@ def setup():
     os.environ['PGHOST'] = '127.0.0.1'
     os.environ['PGUSER'] = 'pguser'
     os.environ['PGPASSWORD'] = 'pgpass'
-    os.environ['AWS_ENDPOINT'] = 'http://127.0.0.1:3900'
+    os.environ['AWS_ENDPOINT_URL'] = 'http://127.0.0.1:3900'
     os.environ['AWS_ACCESS_KEY_ID'] = 'GK3515373e4c851ebaad366558'
     os.environ['AWS_SECRET_ACCESS_KEY'] = (
             '7d37d093435a41f2aab8f13c19ba067d9776c90215f'
             '56614adad6ece597dbb34')
-    os.environ['AWS_S3_REGION_NAME'] = 'garage'
+    os.environ['AWS_DEFAULT_REGION'] = 'garage'
     os.environ['AWS_S3_BUCKET'] = 'pgbackups'
-    os.environ['BLACKLISTED_DATABASES'] = 'pguser|postgres|template.*'
+    os.environ['EXCLUDE_DATABASES'] = 'pguser|postgres|template.*'
     os.environ['AWS_S3_PREFIX'] = 'pg253-integration-tests/'
     s3 = boto3.resource(
             's3',
-            endpoint_url=os.environ['AWS_ENDPOINT'],
-            region_name=os.environ['AWS_S3_REGION_NAME'],
+            endpoint_url=os.environ['AWS_ENDPOINT_URL'],
+            region_name=os.environ['AWS_DEFAULT_REGION'],
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
     s3_bucket = s3.Bucket(os.environ['AWS_S3_BUCKET'])
@@ -59,6 +60,7 @@ def setup():
     s3_bucket.objects.filter(Prefix=os.environ['AWS_S3_PREFIX']).delete()
 
 
+@patch.object(sys, 'argv', ['pg253'])
 @patch('pg253.cli.BlockingScheduler', wraps=MockBlockingScheduler)
 def test_backup_databases_success(_):
     """
@@ -71,8 +73,8 @@ def test_backup_databases_success(_):
     expected_dbs = ['application', 'big', 'data']
     s3 = boto3.resource(
             's3',
-            endpoint_url=os.environ['AWS_ENDPOINT'],
-            region_name=os.environ['AWS_S3_REGION_NAME'],
+            endpoint_url=os.environ['AWS_ENDPOINT_URL'],
+            region_name=os.environ['AWS_DEFAULT_REGION'],
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
     s3_bucket = s3.Bucket(os.environ['AWS_S3_BUCKET'])

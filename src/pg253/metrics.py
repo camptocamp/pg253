@@ -4,17 +4,15 @@ import datetime
 from prometheus_client import start_http_server
 from prometheus_client import Gauge, Counter
 
-from pg253.configuration import Configuration
-
 
 class Metrics:
-    def __init__(self, remote):
+    def __init__(self, remote, exporter_port):
         self.remote = remote
         self.current_read = {}
         self.current_write = {}
 
         # Start and configure prometheus exporter
-        start_http_server(int(Configuration.get('prometheus_exporter_port')))
+        start_http_server(int(exporter_port))
 
         self.total_bytes_read = (
             Counter('total_bytes_read',

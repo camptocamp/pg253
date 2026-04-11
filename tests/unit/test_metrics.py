@@ -36,7 +36,7 @@ def test_refresh_metrics_ok(_):
 
     metric_labels = {'database': 'foo'}
 
-    m = Metrics(mock_remote)
+    m = Metrics(mock_remote, 9352)
     m.refreshMetrics()
 
     assert REGISTRY.get_sample_value('first_backup', metric_labels) == current_time.timestamp()
@@ -58,7 +58,7 @@ def test_refresh_metrics_databases_and_backups_removed(_):
 
     metric_labels = {'database': 'foo'}
 
-    m = Metrics(mock_remote)
+    m = Metrics(mock_remote, 9352)
     m.refreshMetrics()
 
     # We have a database backup, we should have metrics
@@ -81,7 +81,7 @@ def test_refresh_metrics_database_but_no_backup(_):
 
     metric_labels = {'database': 'foo'}
 
-    m = Metrics(mock_remote)
+    m = Metrics(mock_remote, 9352)
 
     # Removing non-existing metrics shouldn't raise an error
     m.refreshMetrics()
