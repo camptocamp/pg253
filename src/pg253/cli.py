@@ -12,7 +12,6 @@ from pg253.remote import S3Remote
 
 def app():
     print(Configuration.str())
-    metrics = Metrics()
     s3_remote = S3Remote(
             endpoint_url=Configuration.get('AWS_ENDPOINT'),
             region_name=Configuration.get('AWS_S3_REGION_NAME'),
@@ -21,6 +20,7 @@ def app():
             bucket=Configuration.get('AWS_S3_BUCKET'),
             path_prefix=Configuration.get('AWS_S3_PREFIX'))
 
+    metrics = Metrics(s3_remote)
     cluster = Cluster(metrics, s3_remote)
 
     print('Databases : %s' % cluster.listDatabase())

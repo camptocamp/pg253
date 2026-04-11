@@ -131,7 +131,7 @@ class S3Remote:
     def start_upload(self, database):
         now = datetime.now()
         path = self.generate_filename(database, dt=now)
-        return Upload(self, database, now, self.bucket, path)
+        return Upload(self, database, now, path)
 
 
 class Upload:
@@ -152,7 +152,7 @@ class Upload:
         return self.bytes_uploaded
 
     def uploadPart(self, body, size, buffer_size):
-        res = self.remote.upload_part(**self.target,
+        res = self.remote.client.upload_part(**self.target,
                                         UploadId=self.upload_id,
                                         PartNumber=self.part_count,
                                         Body=body if size == buffer_size

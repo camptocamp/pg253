@@ -12,6 +12,8 @@ class Cluster:
         self.metrics = metrics
         self.db_exclude = \
             re.compile(Configuration.get('blacklisted_databases'))
+        self.buffer_size = int(Configuration.get('BUFFER_SIZE'))
+        self.retention_days = int(Configuration.get('RETENTION_DAYS'))
         self.remote = remote
 
     def listDatabase(self):
@@ -22,7 +24,6 @@ class Cluster:
                             % res.stderr.decode())
         dbs = res.stdout.decode().strip().split("\n")
         dbs = list(filter(lambda x: not self.db_exclude.search(x), dbs))
-        dbs.remove('template0')
         return dbs
 
     def backup_and_prune(self, *unused):
@@ -32,7 +33,7 @@ class Cluster:
                 print("Backup...")
                 self.backup()
                 print("Prune...")
-                self.prune()
+                self.prune(self.retention_days)
                 self.running = False
                 self.metrics.error.labels('').set(0)
             except Exception as e:
@@ -45,7 +46,7 @@ class Cluster:
     def backup(self):
         for database in self.listDatabase():
             try:
-                Transfer(database, self.metrics, self.buffer_size).run()
+                Transfer(database, self.metrics, self.buffer_size, self.remote).run()
                 self.metrics.error.labels(database).set(0)
             except Exception as e:
                 self.metrics.error.labels(database).set(1)

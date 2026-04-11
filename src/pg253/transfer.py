@@ -24,7 +24,7 @@ class Transfer:
         self.database = database
         self.metrics = metrics
         self.buffer_size = buffer_size
-        self.buffer = bytearray(self.buffer_size)
+        self.buffer = bytearray(int(self.buffer_size))
         self.s3_remote = s3_remote
 
     def run(self):

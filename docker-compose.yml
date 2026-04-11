@@ -20,6 +20,8 @@ services:
     environment:
       POSTGRES_PASSWORD: pgpass
       POSTGRES_USER: pguser
+      PGPASSWORD: pgpass
+      PGUSER: pguser
     ports:
       - "5432:5432"
     volumes:
