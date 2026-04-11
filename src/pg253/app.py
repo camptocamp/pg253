@@ -3,13 +3,69 @@
 import os
 import signal
 import argparse
-
+import subprocess
+import re
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from pg253.metrics import Metrics
-from pg253.cluster import Cluster
 from pg253.remote import S3Remote
+from pg253.transfer import Transfer
+
+
+@dataclass
+class App:
+    """ Core application's class managing the backup process. """
+
+    metrics: Metrics
+    remote: S3Remote
+    exclude_dbs: str
+    buffer_size: int
+    retention_days: int
+
+    def list_databases(self):
+        """ Returns the list of databases to backup. """
+
+        dbs = []
+        cmd = ['psql', '-qAtX', '-c', 'SELECT datname FROM pg_database']
+        try:
+            res = subprocess.run(cmd, capture_output=True, check=True)
+            dbs = res.stdout.decode().strip().split("\n")
+            dbs = list(filter(lambda x: not re.search(self.exclude_dbs, x), dbs))
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                    f"Unable to retrieve database list: {e.stderr.decode('utf-8')}") from e
+        return dbs
+
+    def backup_and_prune(self):
+        """ Run the backup and prune jobs. """
+
+        try:
+            self.backup()
+            self.prune()
+        except Exception as e:
+            raise e
+
+    def backup(self):
+        """ For each database, create a PostgreSQL dump and upload it to S3. """
+
+        for database in self.list_databases():
+            try:
+                Transfer(database, self.metrics, self.buffer_size, self.remote).run()
+                self.metrics.error.labels(database).set(0)
+            except Exception as e:
+                self.metrics.error.labels(database).set(1)
+                raise e
+
+    def prune(self):
+        """ For each database, create a PostgreSQL dump and upload it to S3. """
+
+        for backup in self.remote.fetch_backups():
+            if backup.dt + timedelta(days=self.retention_days) < datetime.now():
+                print(f"Remove backup of '{backup.database}' at {backup.dt}")
+                self.remote.delete_backup(backup)
 
 
 def build_args():
@@ -94,11 +150,12 @@ def build_args():
             '--aws-s3-prefix',
             type=str,
             default=os.getenv('AWS_S3_PREFIX'),
-            help='Prefix to apply on objectswhen storing backups in the S3 bucket.')
+            help='Prefix to apply on objects when storing backups in the S3 bucket.')
 
     return parser.parse_args()
 
-def app():
+
+def run():
     """ Application's entry point """
 
     args = build_args()
@@ -113,10 +170,10 @@ def app():
 
     metrics = Metrics(s3_remote, args.metrics_port)
 
-    cluster = Cluster(
+    app = App(
             metrics=metrics,
             remote=s3_remote,
-            db_exclude=args.exclude_databases,
+            exclude_dbs=args.exclude_databases,
             buffer_size=args.buffer_size,
             retention_days=args.retention_days)
 
@@ -124,11 +181,11 @@ def app():
 
     # Start scheduler
     scheduler = BlockingScheduler()
-    scheduler.add_job(cluster.backup_and_prune, CronTrigger.from_crontab(args.schedule))
+    scheduler.add_job(app.backup_and_prune, CronTrigger.from_crontab(args.schedule))
 
     # Setup some signal
     signal.signal(signal.SIGHUP, s3_remote.fetch_backups)
-    signal.signal(signal.SIGUSR1, cluster.backup_and_prune)
+    signal.signal(signal.SIGUSR1, app.backup_and_prune)
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):

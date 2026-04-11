@@ -8,7 +8,7 @@ import pytest
 import boto3
 import requests
 
-from pg253.cli import app
+from pg253.app import run
 
 
 class MockBlockingScheduler:
@@ -61,14 +61,14 @@ def setup():
 
 
 @patch.object(sys, 'argv', ['pg253'])
-@patch('pg253.cli.BlockingScheduler', wraps=MockBlockingScheduler)
+@patch('pg253.app.BlockingScheduler', wraps=MockBlockingScheduler)
 def test_backup_databases_success(_):
     """
     Validate the behavior of PG253 when executed for real,
     on existing PostgreSQL and S3 resources.
     """
 
-    app()
+    run()
 
     expected_dbs = ['application', 'big', 'data']
     s3 = boto3.resource(
