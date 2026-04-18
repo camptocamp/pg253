@@ -1,3 +1,5 @@
+""" Default package entrypoint. """
+
 import os
 import sys
 

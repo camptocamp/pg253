@@ -4,6 +4,9 @@ dependencies:
 dev-dependencies:
 	pip install -r requirements-dev.txt
 
+lint:
+	pylint src/ tests/
+
 test:
 	pytest -v ./tests/unit
 
