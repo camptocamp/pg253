@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
 from datetime import datetime
 from threading import Thread
+import logging
 
 from pg253.utils import sizeof_fmt
 
@@ -35,8 +36,10 @@ class Transfer:
         upload = self.s3_remote.start_upload(self.database)
         self.metrics.resetTransfer(self.database)
 
-        print("Begin backup of '%s' database to %s/%s"
-              % (self.database, upload.target['Bucket'], upload.target['Key']))
+        logging.info("Starting backup of database '%s' to %s/%s...",
+            self.database,
+            upload.target['Bucket'],
+            upload.target['Key'])
 
         with Popen(input_cmd.split(), stdout=PIPE, stderr=PIPE) as input:
             s = StdErr(input.stderr)
@@ -57,8 +60,10 @@ class Transfer:
                                   self.buffer_size)
 
                 self.metrics.incrementWrite(self.database, bytes_read)
-                print('  Part %s, %s bytes written'
-                      % (upload.part_count - 1, sizeof_fmt(upload.bytes_uploaded)))
+                logging.info("Backup of database '%s': upload part %d, %s bytes written",
+                    self.database,
+                    upload.part_count - 1,
+                    sizeof_fmt(upload.bytes_uploaded))
 
             if input.poll() is not None:
                 if upload.getBytesUploaded() == 0 or input.returncode != 0:
@@ -72,6 +77,7 @@ class Transfer:
                 backup_end = datetime.now()
                 self.metrics.setBackupDuration(self.database, backup_end.timestamp() - backup_start.timestamp())
                 self.metrics.refreshMetrics()
-                print("End backup of '%s'" % self.database)
+                logging.info("Backup of database '%s' has been successfully uploaded.",
+                             self.database)
             else:
                 raise Exception('Read of input finished but process is not finished, should not happen')

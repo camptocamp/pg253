@@ -1,4 +1,5 @@
 import re
+import logging
 from datetime import datetime
 from dataclasses import dataclass
 from botocore.client import BaseClient
@@ -95,7 +96,7 @@ class S3Remote:
                     and "NextContinuationToken" not in response):
                 # Fallback to list_object() V1 if NextContinuationToken
                 # is not in response
-                print("Pagination broken, falling back to list_object V1")
+                logging.warning("Pagination broken, falling back to list_object V1")
                 fetch_method = "V1"
                 response = self.client.list_objects(**s3_args)
 

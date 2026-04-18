@@ -5,6 +5,7 @@ import signal
 import argparse
 import subprocess
 import re
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -64,7 +65,9 @@ class App:
 
         for backup in self.remote.fetch_backups():
             if backup.dt + timedelta(days=self.retention_days) < datetime.now():
-                print(f"Remove backup of '{backup.database}' at {backup.dt}")
+                logging.info("Removing backup of '%s' at %s...",
+                             backup.database,
+                             backup.dt)
                 self.remote.delete_backup(backup)
 
 
@@ -149,7 +152,7 @@ def build_args():
     parser.add_argument(
             '--aws-s3-prefix',
             type=str,
-            default=os.getenv('AWS_S3_PREFIX'),
+            default=os.getenv('AWS_S3_PREFIX', ''),
             help='Prefix to apply on objects when storing backups in the S3 bucket.')
 
     return parser.parse_args()
@@ -160,6 +163,9 @@ def run():
 
     args = build_args()
 
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logging.info("Connecting to the remote S3 endpoint...")
     s3_remote = S3Remote(
             endpoint_url=args.aws_endpoint_url,
             region_name=args.aws_default_region,
@@ -168,6 +174,7 @@ def run():
             bucket=args.aws_s3_bucket,
             path_prefix=args.aws_s3_prefix)
 
+    logging.info("Setting up the Prometheus endpoint...")
     metrics = Metrics(s3_remote, args.metrics_port)
 
     app = App(
@@ -177,8 +184,10 @@ def run():
             buffer_size=args.buffer_size,
             retention_days=args.retention_days)
 
-    print("Databases : {cluster.listDatabase()}")
+    logging.info("Detected databases: %s",
+                 app.list_databases())
 
+    logging.info("Starting scheduler...")
     # Start scheduler
     scheduler = BlockingScheduler()
     scheduler.add_job(app.backup_and_prune, CronTrigger.from_crontab(args.schedule))
