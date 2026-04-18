@@ -1,6 +1,5 @@
 """Module for testing the remote module"""
 
-import sys
 from datetime import datetime
 from freezegun import freeze_time
 
@@ -22,6 +21,8 @@ FAKE_REMOTE_ARGS = {
 
 @mock_aws
 def test_remote_generate_filename_clear_format():
+    """ Should successfully return a backup filename. """
+
     database = "mydb"
     dt = datetime(2021, 8, 6, 0, 22, 48, 236214)
 
@@ -32,6 +33,8 @@ def test_remote_generate_filename_clear_format():
 
 @mock_aws
 def test_remote_list_empty():
+    """ Should return an empty list of backup files. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
@@ -39,11 +42,12 @@ def test_remote_list_empty():
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
 
-    for path, size in s3_remote._list():
-        assert False
+    remote_objects = list(s3_remote._list()) # pylint: disable=protected-access
+    assert len(remote_objects) == 0
 
 @mock_aws
 def test_remote_list_multiple_objects():
+    """ Should return the list of objects stored in the S3 bucket. """
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
@@ -58,22 +62,24 @@ def test_remote_list_multiple_objects():
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
 
-    for i, (path, size) in enumerate(s3_remote._list()):
+    for i, (path, size) in enumerate(s3_remote._list()): # pylint: disable=protected-access
         assert path == expected_results[i][0]
         assert size == expected_results[i][1]
 
-# TODO: Implement a test for pagination/v1-v2 list_objects
-
 @mock_aws
 def test_remote_fetch_ok():
+    """ Should return the list of backups stored in the S3 bucket. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
     conn.Object(FAKE_REMOTE_ARGS["bucket"], "/alpha").put(Body=bytearray(55))
     conn.Object(FAKE_REMOTE_ARGS["bucket"], "/beta").put(Body=bytearray(93))
-    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.mydb.20210806-0022.dump").put(Body=bytearray(22))
-    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.myotherdb.20210806-0022.dump.gpg").put(Body=bytearray(48))
+    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.mydb.20210806-0022.dump").put(
+            Body=bytearray(22))
+    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.myotherdb.20210806-0022.dump.gpg").put(
+            Body=bytearray(48))
 
     expected_results = [
             ("mydb", 22, datetime(2021, 8, 6, 0, 22), False),
@@ -91,18 +97,21 @@ def test_remote_fetch_ok():
 
 @mock_aws
 def test_remote_delete_backup_clear_format():
+    """ Should successfully remove a backup file from the S3 bucket. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
-    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.mydb.20210806-0022.dump").put(Body=bytearray(22))
+    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.mydb.20210806-0022.dump").put(
+            Body=bytearray(22))
 
     database = "mydb"
     dt = datetime(2021, 8, 6, 0, 22, 48, 236214)
 
     backup = Backup(database=database, dt=dt, size=0, path="/postgres.mydb.20210806-0022.dump")
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
-    backups = s3_remote.delete_backup(backup)
+    s3_remote.delete_backup(backup)
 
     with pytest.raises(s3_remote.client.exceptions.NoSuchKey):
         conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.mydb.20210806-0022.dump").get()
@@ -110,6 +119,8 @@ def test_remote_delete_backup_clear_format():
 @freeze_time("2026-01-01 00:00:01")
 @mock_aws
 def test_remote_start_upload():
+    """ Should create an Upload object with the correct values. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
@@ -125,6 +136,8 @@ def test_remote_start_upload():
 
 @mock_aws
 def test_remote_upload_upload_part():
+    """ Should successfully upload a part of file to S3. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
@@ -139,6 +152,8 @@ def test_remote_upload_upload_part():
 
 @mock_aws
 def test_remote_upload_complete():
+    """ Should successfully upload an entire file to S3. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
@@ -151,6 +166,8 @@ def test_remote_upload_complete():
 
 @mock_aws
 def test_remote_upload_abort():
+    """ Should successfully abort an upload of a file to S3. """
+
     conn = boto3.resource(
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])

@@ -1,6 +1,5 @@
 """Module for testing the metrics module"""
 
-import sys
 from datetime import datetime
 
 from unittest.mock import patch, MagicMock
@@ -76,7 +75,6 @@ def test_refresh_metrics_databases_and_backups_removed(_):
 def test_refresh_metrics_database_but_no_backup(_):
     """Test Metrics.refreshMetrics() when database exists but no backup exists"""
     mock_remote = MagicMock()
-    current_time = datetime.now()
     mock_remote.fetch_backups.return_value = []
 
     metric_labels = {'database': 'foo'}
