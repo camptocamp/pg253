@@ -14,7 +14,7 @@ integration:
 	pytest -v ./tests/integration
 
 coverage:
-	coverage run -m pytest -v
+	coverage run -m pytest -v ./tests/unit
 
 seed-dev-env:
 	docker compose up -d postgres

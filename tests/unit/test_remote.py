@@ -2,6 +2,7 @@
 
 import sys
 from datetime import datetime
+from freezegun import freeze_time
 
 import pytest
 import boto3
@@ -61,6 +62,8 @@ def test_remote_list_multiple_objects():
         assert path == expected_results[i][0]
         assert size == expected_results[i][1]
 
+# TODO: Implement a test for pagination/v1-v2 list_objects
+
 @mock_aws
 def test_remote_fetch_ok():
     conn = boto3.resource(
@@ -103,3 +106,57 @@ def test_remote_delete_backup_clear_format():
 
     with pytest.raises(s3_remote.client.exceptions.NoSuchKey):
         conn.Object(FAKE_REMOTE_ARGS["bucket"], "/postgres.mydb.20210806-0022.dump").get()
+
+@freeze_time("2026-01-01 00:00:01")
+@mock_aws
+def test_remote_start_upload():
+    conn = boto3.resource(
+            service_name="s3",
+            region_name=FAKE_REMOTE_ARGS["region_name"])
+    conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
+
+    s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
+    upload = s3_remote.start_upload("mydb")
+
+    assert upload.database == "mydb"
+    assert upload.start_time == datetime(2026, 1, 1, 0, 0, 1)
+    assert upload.target['Bucket'] == FAKE_REMOTE_ARGS["bucket"]
+    assert upload.target['Key'] == "/postgres.mydb.20260101-0000.dump"
+
+@mock_aws
+def test_remote_upload_upload_part():
+    conn = boto3.resource(
+            service_name="s3",
+            region_name=FAKE_REMOTE_ARGS["region_name"])
+    conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
+
+    s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
+    upload = s3_remote.start_upload("mydb")
+    upload.uploadPart(bytearray(100), 100, 100)
+
+    assert upload.part_count == 2
+    assert upload.bytes_uploaded == 100
+
+@mock_aws
+def test_remote_upload_complete():
+    conn = boto3.resource(
+            service_name="s3",
+            region_name=FAKE_REMOTE_ARGS["region_name"])
+    conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
+
+    s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
+    upload = s3_remote.start_upload("mydb")
+    upload.uploadPart(bytearray(100), 100, 100)
+    upload.complete()
+
+@mock_aws
+def test_remote_upload_abort():
+    conn = boto3.resource(
+            service_name="s3",
+            region_name=FAKE_REMOTE_ARGS["region_name"])
+    conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
+
+    s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
+    upload = s3_remote.start_upload("mydb")
+    upload.uploadPart(bytearray(100), 100, 100)
+    upload.abort()
