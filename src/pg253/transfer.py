@@ -1,3 +1,5 @@
+""" Module containing the functions to dump PostgreSQL databases. """
+
 from subprocess import Popen, PIPE
 from datetime import datetime
 from threading import Thread
@@ -7,6 +9,7 @@ from pg253.utils import sizeof_fmt
 
 
 class StdErr(Thread):
+    """ Overrides the default Thread class. """
     def __init__(self, stream):
         Thread.__init__(self)
         self.stream = stream
@@ -20,7 +23,9 @@ class StdErr(Thread):
             self.output += output
 
 
-class Transfer:
+class Transfer: # pylint: disable=too-few-public-methods
+    """ Coordinates the PostgreSQL dump and sending of the dump to S3. """
+
     def __init__(self, database, metrics, buffer_size, s3_remote):
         self.database = database
         self.metrics = metrics
@@ -29,10 +34,12 @@ class Transfer:
         self.s3_remote = s3_remote
 
     def run(self):
+        """ Execute a PostgreSQL dump and upload it in multiple parts to S3. """
+
         backup_start = datetime.now()
         # Use compression level 1 to reduce CPU pressure, keep an acceptable
         # transfer rate and reduce the size of backups to a minimum
-        input_cmd = 'pg_dump -Fc -Z1 -v -d %s' % self.database
+        dump_cmd = f"pg_dump -Fc -Z1 -v -d {self.database}"
         upload = self.s3_remote.start_upload(self.database)
         self.metrics.resetTransfer(self.database)
 
@@ -41,14 +48,14 @@ class Transfer:
             upload.target['Bucket'],
             upload.target['Key'])
 
-        with Popen(input_cmd.split(), stdout=PIPE, stderr=PIPE) as input:
-            s = StdErr(input.stderr)
+        with Popen(dump_cmd.split(), stdout=PIPE, stderr=PIPE) as cmd_exec:
+            s = StdErr(cmd_exec.stderr)
             s.start()
             while True:
                 self.metrics.setPart(self.database, upload.part_count)
 
                 # Retrieve data from input in the buffer
-                bytes_read = input.stdout.readinto(self.buffer)
+                bytes_read = cmd_exec.stdout.readinto(self.buffer)
                 self.metrics.incrementRead(self.database, bytes_read)
 
                 if bytes_read == 0:
@@ -65,19 +72,21 @@ class Transfer:
                     upload.part_count - 1,
                     sizeof_fmt(upload.bytes_uploaded))
 
-            if input.poll() is not None:
-                if upload.getBytesUploaded() == 0 or input.returncode != 0:
+            if cmd_exec.poll() is not None:
+                if upload.getBytesUploaded() == 0 or cmd_exec.returncode != 0:
                     upload.abort()
-                    raise Exception(
-                        'Error: no data transfered or error on pg_dump: %s'
-                        % s.output)
+                    raise RuntimeError(
+                        "Error: no data transfered or error on pg_dump: {s.output}")
 
                 upload.complete()
                 self.metrics.addBackup(self.database, upload.start_time, upload.bytes_uploaded)
                 backup_end = datetime.now()
-                self.metrics.setBackupDuration(self.database, backup_end.timestamp() - backup_start.timestamp())
+                self.metrics.setBackupDuration(
+                        self.database,
+                        backup_end.timestamp() - backup_start.timestamp())
                 self.metrics.refreshMetrics()
                 logging.info("Backup of database '%s' has been successfully uploaded.",
                              self.database)
             else:
-                raise Exception('Read of input finished but process is not finished, should not happen')
+                raise RuntimeError(
+                        'Read of input finished but process is not finished, should not happen')
