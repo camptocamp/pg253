@@ -1,5 +1,7 @@
+ARG POSTGRESQL_VERSION="16"
+
 # Build exporter
-FROM debian:bookworm AS builder
+FROM docker.io/library/debian:bookworm AS builder
 
 WORKDIR /usr/src/
 
@@ -17,7 +19,7 @@ COPY . /usr/src/
 RUN pyinstaller --onefile ./src/pg253/__main__.py
 
 # Build final image
-FROM postgres:16
+FROM docker.io/library/postgres:${POSTGRESQL_VERSION}
 
 COPY --from=builder /usr/src/dist/__main__ /usr/bin/pg253
 RUN apt-get update && \
