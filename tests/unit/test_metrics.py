@@ -22,7 +22,7 @@ def setup():
 
 @patch('pg253.metrics.start_http_server', autospec=True)
 def test_refresh_metrics_ok(_):
-    """Test Metrics.refreshMetrics() with valid parameters"""
+    """Test Metrics.refresh_metrics() with valid parameters"""
     mock_remote = MagicMock()
     current_time = datetime.now()
     mock_remote.fetch_backups.return_value = [
@@ -36,7 +36,7 @@ def test_refresh_metrics_ok(_):
     metric_labels = {'database': 'foo'}
 
     m = Metrics(mock_remote, 9352)
-    m.refreshMetrics()
+    m.refresh_metrics()
 
     assert REGISTRY.get_sample_value('first_backup', metric_labels) == current_time.timestamp()
     assert REGISTRY.get_sample_value('last_backup', metric_labels) == current_time.timestamp()
@@ -44,7 +44,7 @@ def test_refresh_metrics_ok(_):
 
 @patch('pg253.metrics.start_http_server', autospec=True)
 def test_refresh_metrics_databases_and_backups_removed(_):
-    """Test Metrics.refreshMetrics() when database and all backups have been removed"""
+    """Test Metrics.refresh_metrics() when database and all backups have been removed"""
     mock_remote = MagicMock()
     current_time = datetime.now()
     mock_remote.fetch_backups.return_value = [
@@ -58,14 +58,14 @@ def test_refresh_metrics_databases_and_backups_removed(_):
     metric_labels = {'database': 'foo'}
 
     m = Metrics(mock_remote, 9352)
-    m.refreshMetrics()
+    m.refresh_metrics()
 
     # We have a database backup, we should have metrics
     assert REGISTRY.get_sample_value('first_backup', metric_labels) == current_time.timestamp()
     assert REGISTRY.get_sample_value('last_backup', metric_labels) == current_time.timestamp()
 
     mock_remote.fetch_backups.return_value = []
-    m.refreshMetrics()
+    m.refresh_metrics()
 
     # We removed database's backups, we shouldn't have metrics anymore
     assert REGISTRY.get_sample_value('first_backup', metric_labels) is None
@@ -73,7 +73,7 @@ def test_refresh_metrics_databases_and_backups_removed(_):
 
 @patch('pg253.metrics.start_http_server', autospec=True)
 def test_refresh_metrics_database_but_no_backup(_):
-    """Test Metrics.refreshMetrics() when database exists but no backup exists"""
+    """Test Metrics.refresh_metrics() when database exists but no backup exists"""
     mock_remote = MagicMock()
     mock_remote.fetch_backups.return_value = []
 
@@ -82,7 +82,7 @@ def test_refresh_metrics_database_but_no_backup(_):
     m = Metrics(mock_remote, 9352)
 
     # Removing non-existing metrics shouldn't raise an error
-    m.refreshMetrics()
+    m.refresh_metrics()
 
     # Metrics should not exist
     assert REGISTRY.get_sample_value('first_backup', metric_labels) is None

@@ -41,7 +41,7 @@ class Transfer: # pylint: disable=too-few-public-methods
         # transfer rate and reduce the size of backups to a minimum
         dump_cmd = f"pg_dump -Fc -Z1 -v -d {self.database}"
         upload = self.s3_remote.start_upload(self.database)
-        self.metrics.resetTransfer(self.database)
+        self.metrics.reset_transfer(self.database)
 
         logging.info("Starting backup of database '%s' to %s/%s...",
             self.database,
@@ -52,11 +52,11 @@ class Transfer: # pylint: disable=too-few-public-methods
             s = StdErr(cmd_exec.stderr)
             s.start()
             while True:
-                self.metrics.setPart(self.database, upload.part_count)
+                self.metrics.set_part(self.database, upload.part_count)
 
                 # Retrieve data from input in the buffer
                 bytes_read = cmd_exec.stdout.readinto(self.buffer)
-                self.metrics.incrementRead(self.database, bytes_read)
+                self.metrics.increment_read(self.database, bytes_read)
 
                 if bytes_read == 0:
                     break
@@ -66,7 +66,7 @@ class Transfer: # pylint: disable=too-few-public-methods
                                   bytes_read,
                                   self.buffer_size)
 
-                self.metrics.incrementWrite(self.database, bytes_read)
+                self.metrics.increment_write(self.database, bytes_read)
                 logging.info("Backup of database '%s': upload part %d, %s bytes written",
                     self.database,
                     upload.part_count - 1,
@@ -79,12 +79,12 @@ class Transfer: # pylint: disable=too-few-public-methods
                         "Error: no data transfered or error on pg_dump: {s.output}")
 
                 upload.complete()
-                self.metrics.addBackup(self.database, upload.start_time, upload.bytes_uploaded)
+                self.metrics.add_backup(self.database, upload.start_time, upload.bytes_uploaded)
                 backup_end = datetime.now()
-                self.metrics.setBackupDuration(
+                self.metrics.set_backup_duration(
                         self.database,
                         backup_end.timestamp() - backup_start.timestamp())
-                self.metrics.refreshMetrics()
+                self.metrics.refresh_metrics()
                 logging.info("Backup of database '%s' has been successfully uploaded.",
                              self.database)
             else:

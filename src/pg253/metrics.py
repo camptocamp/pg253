@@ -1,11 +1,11 @@
-import re
-import datetime
+""" Module managing the Prometheus metrics collection. """
 
 from prometheus_client import start_http_server
 from prometheus_client import Gauge, Counter
 
+class Metrics: # pylint: disable=too-many-instance-attributes
+    """ Contains all Prometheus metrics and starts the exporter. """
 
-class Metrics:
     def __init__(self, remote, exporter_port):
         self.remote = remote
         self.current_read = {}
@@ -52,16 +52,20 @@ class Metrics:
             Gauge('error',
                   'Error during backup',
                   ['database']))
-        self._readRemoteBackup()
+        self._read_remote_backup()
 
 
-    def _readRemoteBackup(self):
-        self.refreshMetrics()
+    def _read_remote_backup(self):
+        """ Fetch remote backups and set metrics. """
+
+        self.refresh_metrics()
         for backup in self.remote.fetch_backups():
-            self.addBackup(backup.database, backup.dt, backup.size)
+            self.add_backup(backup.database, backup.dt, backup.size)
 
 
-    def refreshMetrics(self):
+    def refresh_metrics(self):
+        """ Fetch remote backups and set the first and last backups metrics. """
+
         self.first_backup.clear()
         self.last_backup.clear()
         backup_dates_per_db = {}
@@ -75,41 +79,61 @@ class Metrics:
             self.first_backup.labels(database).set(min(backup_dates).timestamp())
             self.last_backup.labels(database).set(max(backup_dates).timestamp())
 
-    def removeBackup(self, database, date, size):
+    def remove_backup(self, database, date, size):
+        """ Remove a "backups" metric. """
+
         self.backups.remove(database, date.strftime('%Y%m%d-%H%M'), size)
-        self.refreshMetrics()
+        self.refresh_metrics()
 
-    def addBackup(self, database, date, size):
+    def add_backup(self, database, date, size):
+        """ Add a "backups" metric. """
+
         self.backups.labels(database, date.strftime('%Y%m%d-%H%M'), size).set(date.timestamp())
-        self.refreshMetrics()
+        self.refresh_metrics()
 
-    def setLastBackup(self, database, backup_datetime):
+    def set_last_backup(self, database, backup_datetime):
+        """ Set a "last_backup" metric. """
+
         self.last_backup.labels(database).set(backup_datetime.timestamp())
 
-    def setBackupDuration(self, database, duration):
+    def set_backup_duration(self, database, duration):
+        """ Set a "backup_duration" metric. """
+
         self.backup_duration.labels(database).set(duration)
 
-    def resetTransfer(self, database):
+    def reset_transfer(self, database):
+        """ Reset the transfer related metrics. """
+
         self.current_bytes_read.labels(database).set(0)
         self.current_bytes_write.labels(database).set(0)
         self.current_read[database] = 0
         self.current_write[database] = 0
 
-    def incrementRead(self, database, count):
+    def increment_read(self, database, count):
+        """ Increment the bytes read related metrics. """
+
         self.current_bytes_read.labels(database).inc(count)
         self.current_read[database] += count
         self.total_bytes_read.inc(count)
 
-    def incrementWrite(self, database, count):
+    def increment_write(self, database, count):
+        """ Increment the bytes write related metrics. """
+
         self.current_bytes_write.labels(database).inc(count)
         self.current_write[database] += count
         self.total_bytes_write.inc(count)
 
-    def setPart(self, database, count):
+    def set_part(self, database, count):
+        """ Increment the part count metrics. """
+
         self.part_count.labels(database).set(count)
 
-    def getCurrentRead(self, database):
+    def get_current_read(self, database):
+        """ Returns the current read metric for a database. """
+
         return self.current_read[database]
 
-    def getCurrentWrite(self, database):
+    def get_current_write(self, database):
+        """ Returns the current write metric for a database. """
+
         return self.current_write[database]
