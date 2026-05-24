@@ -26,6 +26,7 @@ class App:
     buffer_size: int
     retention_days: int
     encryption_passphrase: str
+    backup_roles: bool
 
     def list_databases(self):
         """ Returns the list of databases to backup. """
@@ -53,14 +54,22 @@ class App:
     def backup(self):
         """ For each database, create a PostgreSQL dump and upload it to S3. """
 
+        transfer = Transfer(metrics=self.metrics,
+                            buffer_size=self.buffer_size,
+                            s3_remote=self.remote,
+                            encryption_passphrase=self.encryption_passphrase)
+
+        if self.backup_roles:
+            try:
+                transfer.backup_database('pgroles', 'pg_dumpall --roles-only')
+                self.metrics.error.labels('pgroles').set(0)
+            except Exception as e:
+                self.metrics.error.labels('pgroles').set(1)
+                raise e
+
         for database in self.list_databases():
             try:
-                Transfer(
-                        database=database,
-                        metrics=self.metrics,
-                        buffer_size=self.buffer_size,
-                        s3_remote=self.remote,
-                        encryption_passphrase=self.encryption_passphrase).run()
+                transfer.backup_database(database, f"pg_dump -Fc -Z1 -v -d {database}")
                 self.metrics.error.labels(database).set(0)
             except Exception as e:
                 self.metrics.error.labels(database).set(1)
@@ -111,6 +120,11 @@ def build_args():
             type=str,
             default=os.getenv('ENCRYPTION_PASSPHRASE', ''),
             help='Passphrase used to encrypt backups with GPG.')
+    parser.add_argument(
+            '--backup-roles',
+            action='store_true',
+            default=os.getenv('BACKUP_ROLES', '').lower() == 'true',
+            help='Backup the PostgreSQL roles.')
 
     # PostgreSQL parameters
     parser.add_argument(
@@ -194,7 +208,8 @@ def run():
             exclude_dbs=args.exclude_databases,
             buffer_size=args.buffer_size,
             retention_days=args.retention_days,
-            encryption_passphrase=args.encryption_passphrase)
+            encryption_passphrase=args.encryption_passphrase,
+            backup_roles=args.backup_roles)
 
     logging.info("Detected databases: %s",
                  app.list_databases())

@@ -31,13 +31,13 @@ class StdErr(Thread):
 class Transfer: # pylint: disable=too-few-public-methods
     """ Coordinates the PostgreSQL dump and sending of the dump to S3. """
 
-    database: str
     metrics: Metrics
     buffer_size: int
     s3_remote: S3Remote
     encryption_passphrase: str
     buffer: bytearray = None
     upload: Upload = None
+    database: str = ''
 
     def __post_init__(self):
         self.buffer = bytearray(int(self.buffer_size))
@@ -67,13 +67,14 @@ class Transfer: # pylint: disable=too-few-public-methods
 
         return False
 
-    def run(self):
+
+    def backup_database(self, database, dump_cmd):
         """ Execute a PostgreSQL dump and upload it in multiple parts to S3. """
 
+        self.database = database
         backup_start = datetime.now()
         # Use compression level 1 to reduce CPU pressure, keep an acceptable
         # transfer rate and reduce the size of backups to a minimum
-        dump_cmd = f"pg_dump -Fc -Z1 -v -d {self.database}"
         encrypted = self.encryption_passphrase != ''
         self.upload = self.s3_remote.start_upload(self.database, encrypted)
         self.metrics.reset_transfer(self.database)

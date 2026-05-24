@@ -16,6 +16,7 @@ integration:
 	$(MAKE) seed-dev-env
 	pytest -v ./tests/integration/test_integration_unencrypted.py
 	pytest -v ./tests/integration/test_integration_encrypted.py
+	pytest -v ./tests/integration/test_integration_roles.py
 
 coverage:
 	coverage run -m pytest -v ./tests/unit
