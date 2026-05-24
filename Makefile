@@ -14,7 +14,8 @@ integration:
 	docker compose up -d garage
 	docker compose up -d garage-init
 	$(MAKE) seed-dev-env
-	pytest -v ./tests/integration
+	pytest -v ./tests/integration/test_integration_unencrypted.py
+	pytest -v ./tests/integration/test_integration_encrypted.py
 
 coverage:
 	coverage run -m pytest -v ./tests/unit

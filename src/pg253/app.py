@@ -25,6 +25,7 @@ class App:
     exclude_dbs: str
     buffer_size: int
     retention_days: int
+    encryption_passphrase: str
 
     def list_databases(self):
         """ Returns the list of databases to backup. """
@@ -54,7 +55,12 @@ class App:
 
         for database in self.list_databases():
             try:
-                Transfer(database, self.metrics, self.buffer_size, self.remote).run()
+                Transfer(
+                        database=database,
+                        metrics=self.metrics,
+                        buffer_size=self.buffer_size,
+                        s3_remote=self.remote,
+                        encryption_passphrase=self.encryption_passphrase).run()
                 self.metrics.error.labels(database).set(0)
             except Exception as e:
                 self.metrics.error.labels(database).set(1)
@@ -100,6 +106,11 @@ def build_args():
             type=str,
             default=os.getenv('EXCLUDE_DATABASES', '.*backup.*|postgres|rdsadmin|rdb|template.*'),
             help='Regexp to exclude databases.')
+    parser.add_argument(
+            '--encryption-passphrase',
+            type=str,
+            default=os.getenv('ENCRYPTION_PASSPHRASE', ''),
+            help='Passphrase used to encrypt backups with GPG.')
 
     # PostgreSQL parameters
     parser.add_argument(
@@ -182,7 +193,8 @@ def run():
             remote=s3_remote,
             exclude_dbs=args.exclude_databases,
             buffer_size=args.buffer_size,
-            retention_days=args.retention_days)
+            retention_days=args.retention_days,
+            encryption_passphrase=args.encryption_passphrase)
 
     logging.info("Detected databases: %s",
                  app.list_databases())
@@ -198,4 +210,5 @@ def run():
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
-        pass
+        scheduler.shutdown()
+        metrics.shutdown()

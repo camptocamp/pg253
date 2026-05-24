@@ -12,7 +12,7 @@ class Metrics: # pylint: disable=too-many-instance-attributes
         self.current_write = {}
 
         # Start and configure prometheus exporter
-        start_http_server(int(exporter_port))
+        self.server, self.server_thread = start_http_server(int(exporter_port))
 
         self.total_bytes_read = (
             Counter('total_bytes_read',
@@ -54,6 +54,12 @@ class Metrics: # pylint: disable=too-many-instance-attributes
                   ['database']))
         self._read_remote_backup()
 
+    def shutdown(self):
+        """ Gracefully stop the metrics server. """
+
+        self.server.shutdown()
+        self.server.server_close()
+        self.server_thread.join()
 
     def _read_remote_backup(self):
         """ Fetch remote backups and set metrics. """

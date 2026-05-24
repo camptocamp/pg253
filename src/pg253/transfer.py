@@ -3,9 +3,13 @@
 from subprocess import Popen, PIPE
 from datetime import datetime
 from threading import Thread
+from dataclasses import dataclass
 import logging
+from gnupg import GPG
 
 from pg253.utils import sizeof_fmt
+from pg253.remote import S3Remote, Upload
+from pg253.metrics import Metrics
 
 
 class StdErr(Thread):
@@ -23,15 +27,45 @@ class StdErr(Thread):
             self.output += output
 
 
+@dataclass
 class Transfer: # pylint: disable=too-few-public-methods
     """ Coordinates the PostgreSQL dump and sending of the dump to S3. """
 
-    def __init__(self, database, metrics, buffer_size, s3_remote):
-        self.database = database
-        self.metrics = metrics
-        self.buffer_size = buffer_size
+    database: str
+    metrics: Metrics
+    buffer_size: int
+    s3_remote: S3Remote
+    encryption_passphrase: str
+    buffer: bytearray = None
+    upload: Upload = None
+
+    def __post_init__(self):
         self.buffer = bytearray(int(self.buffer_size))
-        self.s3_remote = s3_remote
+
+    def upload_data(self, chunk):
+        """ Uploads a chunk to the remote bucket. """
+
+        if len(chunk) == 0:
+            return False
+
+        self.metrics.set_part(self.database, len(self.upload.parts))
+
+        # Retrieve data from input in the buffer
+        self.metrics.increment_read(self.database, len(chunk))
+
+        # Push buffer to object storage
+        self.upload.upload_part(chunk,
+                          len(chunk),
+                          self.buffer_size)
+
+        self.metrics.increment_write(self.database, len(chunk))
+
+        logging.info("Backup of database '%s': upload part %d, %s bytes written",
+            self.database,
+            len(self.upload.parts),
+            sizeof_fmt(self.upload.bytes_uploaded))
+
+        return False
 
     def run(self):
         """ Execute a PostgreSQL dump and upload it in multiple parts to S3. """
@@ -40,46 +74,45 @@ class Transfer: # pylint: disable=too-few-public-methods
         # Use compression level 1 to reduce CPU pressure, keep an acceptable
         # transfer rate and reduce the size of backups to a minimum
         dump_cmd = f"pg_dump -Fc -Z1 -v -d {self.database}"
-        upload = self.s3_remote.start_upload(self.database)
+        encrypted = self.encryption_passphrase != ''
+        self.upload = self.s3_remote.start_upload(self.database, encrypted)
         self.metrics.reset_transfer(self.database)
 
         logging.info("Starting backup of database '%s' to %s/%s...",
             self.database,
-            upload.target['Bucket'],
-            upload.target['Key'])
+            self.upload.target['Bucket'],
+            self.upload.target['Key'])
 
         with Popen(dump_cmd.split(), stdout=PIPE, stderr=PIPE) as cmd_exec:
             s = StdErr(cmd_exec.stderr)
             s.start()
-            while True:
-                self.metrics.set_part(self.database, len(upload.parts))
 
-                # Retrieve data from input in the buffer
-                bytes_read = cmd_exec.stdout.readinto(self.buffer)
-                self.metrics.increment_read(self.database, bytes_read)
-
-                if bytes_read == 0:
-                    break
-
-                # Push buffer to object storage
-                upload.upload_part(self.buffer,
-                                  bytes_read,
-                                  self.buffer_size)
-
-                self.metrics.increment_write(self.database, bytes_read)
-                logging.info("Backup of database '%s': upload part %d, %s bytes written",
-                    self.database,
-                    len(upload.parts),
-                    sizeof_fmt(upload.bytes_uploaded))
+            if self.encryption_passphrase != '':
+                gpg = GPG()
+                gpg.buffer_size = self.buffer_size
+                gpg.on_data = self.upload_data
+                gpg.encrypt_file(
+                    cmd_exec.stdout,
+                    recipients=[],
+                    passphrase=self.encryption_passphrase,
+                    symmetric=True)
+            else:
+                while data := cmd_exec.stdout.read(self.buffer_size):
+                    if len(data) == 0:
+                        break
+                    self.upload_data(bytes(data))
 
             if cmd_exec.poll() is not None:
-                if upload.bytes_uploaded == 0 or cmd_exec.returncode != 0:
-                    upload.abort()
+                if self.upload.bytes_uploaded == 0 or cmd_exec.returncode != 0:
+                    self.upload.abort()
                     raise RuntimeError(
                         "Error: no data transfered or error on pg_dump: {s.output}")
 
-                upload.complete()
-                self.metrics.add_backup(self.database, upload.start_time, upload.bytes_uploaded)
+                self.upload.complete()
+                self.metrics.add_backup(
+                        self.database,
+                        self.upload.start_time,
+                        self.upload.bytes_uploaded)
                 backup_end = datetime.now()
                 self.metrics.set_backup_duration(
                         self.database,

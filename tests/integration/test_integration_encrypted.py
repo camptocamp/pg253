@@ -1,12 +1,16 @@
 """ Module to run integration tests """
 
+# pylint: disable=duplicate-code
+
 import sys
 import os
 import re
+import tempfile
 from unittest.mock import patch
 import pytest
 import boto3
 import requests
+from gnupg import GPG
 
 from pg253.app import run
 
@@ -47,6 +51,7 @@ def setup():
     os.environ['AWS_S3_BUCKET'] = 'pgbackups'
     os.environ['EXCLUDE_DATABASES'] = 'pguser|postgres|template.*'
     os.environ['AWS_S3_PREFIX'] = 'pg253-integration-tests/'
+    os.environ['ENCRYPTION_PASSPHRASE'] = "myencryptionpassphrase"
     s3 = boto3.resource(
             's3',
             endpoint_url=os.environ['AWS_ENDPOINT_URL'],
@@ -59,13 +64,14 @@ def setup():
 
     s3_bucket.objects.filter(Prefix=os.environ['AWS_S3_PREFIX']).delete()
 
-
 @patch.object(sys, 'argv', ['pg253'])
 @patch('pg253.app.BlockingScheduler', wraps=MockBlockingScheduler)
-def test_backup_databases_success(_):
+def test_backup_databases_success_encrypted(_):
     """
     Validate the behavior of PG253 when executed for real,
     on existing PostgreSQL and S3 resources.
+
+    The backups must be encrypted.
     """
 
     run()
@@ -78,13 +84,6 @@ def test_backup_databases_success(_):
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
     s3_bucket = s3.Bucket(os.environ['AWS_S3_BUCKET'])
-
-    for i, obj in enumerate(s3_bucket.objects.all()):
-        pattern = re.compile("%spostgres.%s.[0-9]{8}-[0-9]{4}.dump" % (
-            os.environ['AWS_S3_PREFIX'],
-            expected_dbs[i]))
-        assert pattern.match(obj.key)
-        assert obj.size > 30000000 # Arbitrary value to ensure the object is not empty
 
     r = requests.get('http://127.0.0.1:9352/metrics', timeout=5)
     assert r.status_code == 200
@@ -125,3 +124,25 @@ def test_backup_databases_success(_):
                 '^error{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        for i, obj in enumerate(s3_bucket.objects.all()):
+            pattern = re.compile("%spostgres.%s.[0-9]{8}-[0-9]{4}.dump.gpg" % (
+                os.environ['AWS_S3_PREFIX'],
+                expected_dbs[i]))
+            assert pattern.match(obj.key)
+            assert obj.size > 1000000 # Arbitrary value to ensure the object is not empty
+
+            encrypted_backup_path = f"{tmpdirname}/{obj.key.replace('/', '_')}"
+            decrypted_backup_path = f"{tmpdirname}/{obj.key.replace('/', '_').replace('.gpg', '')}"
+            s3_bucket.download_file(obj.key, encrypted_backup_path)
+            with open(encrypted_backup_path, "rb") as input_file:
+                gpg = GPG()
+                gpg.decrypt_file(
+                        input_file,
+                        passphrase='myencryptionpassphrase',
+                        output=decrypted_backup_path)
+
+            with open(decrypted_backup_path, "rb") as backup_file:
+                header = backup_file.read(5).decode('utf-8')
+                assert header == "PGDMP"

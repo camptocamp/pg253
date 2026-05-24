@@ -20,7 +20,7 @@ def setup():
     for collector in collectors:
         REGISTRY.unregister(collector)
 
-@patch('pg253.metrics.start_http_server', autospec=True)
+@patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
 def test_refresh_metrics_ok(_):
     """Test Metrics.refresh_metrics() with valid parameters"""
     mock_remote = MagicMock()
@@ -42,7 +42,7 @@ def test_refresh_metrics_ok(_):
     assert REGISTRY.get_sample_value('last_backup', metric_labels) == current_time.timestamp()
 
 
-@patch('pg253.metrics.start_http_server', autospec=True)
+@patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
 def test_refresh_metrics_databases_and_backups_removed(_):
     """Test Metrics.refresh_metrics() when database and all backups have been removed"""
     mock_remote = MagicMock()
@@ -71,7 +71,7 @@ def test_refresh_metrics_databases_and_backups_removed(_):
     assert REGISTRY.get_sample_value('first_backup', metric_labels) is None
     assert REGISTRY.get_sample_value('last_backup', metric_labels) is None
 
-@patch('pg253.metrics.start_http_server', autospec=True)
+@patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
 def test_refresh_metrics_database_but_no_backup(_):
     """Test Metrics.refresh_metrics() when database exists but no backup exists"""
     mock_remote = MagicMock()

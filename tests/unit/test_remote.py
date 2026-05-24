@@ -27,9 +27,21 @@ def test_remote_generate_filename_clear_format():
     dt = datetime(2021, 8, 6, 0, 22, 48, 236214)
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
-    result = s3_remote.generate_filename(database, dt)
+    result = s3_remote.generate_filename(database, dt, False)
 
     assert result == "/postgres.mydb.20210806-0022.dump"
+
+@mock_aws
+def test_remote_generate_filename_encrypted_format():
+    """ Should successfully return an encrypted backup filename. """
+
+    database = "mydb"
+    dt = datetime(2021, 8, 6, 0, 22, 48, 236214)
+
+    s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
+    result = s3_remote.generate_filename(database, dt, True)
+
+    assert result == "/postgres.mydb.20210806-0022.dump.gpg"
 
 @mock_aws
 def test_remote_list_empty():
@@ -126,7 +138,7 @@ def test_remote_start_upload():
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
-    upload = s3_remote.start_upload("mydb")
+    upload = s3_remote.start_upload("mydb", False)
 
     assert upload.start_time == datetime(2026, 1, 1, 0, 0, 1)
     assert upload.target['Bucket'] == FAKE_REMOTE_ARGS["bucket"]
@@ -142,7 +154,7 @@ def test_remote_upload_upload_part():
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
-    upload = s3_remote.start_upload("mydb")
+    upload = s3_remote.start_upload("mydb", False)
     upload.upload_part(bytearray(100), 100, 100)
 
     assert len(upload.parts) == 1
@@ -158,7 +170,7 @@ def test_remote_upload_complete():
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
-    upload = s3_remote.start_upload("mydb")
+    upload = s3_remote.start_upload("mydb", False)
     upload.upload_part(bytearray(100), 100, 100)
     upload.complete()
 
@@ -172,6 +184,6 @@ def test_remote_upload_abort():
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
-    upload = s3_remote.start_upload("mydb")
+    upload = s3_remote.start_upload("mydb", False)
     upload.upload_part(bytearray(100), 100, 100)
     upload.abort()

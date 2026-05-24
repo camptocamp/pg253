@@ -47,10 +47,13 @@ class S3Remote: # pylint: disable=too-many-instance-attributes
             'Prefix': self.path_prefix,
         }
 
-    def generate_filename(self, database, dt):
+    def generate_filename(self, database, dt, encrypted):
         """ Generate an object path for a backup. """
 
-        return f"{self.path_prefix}postgres.{database}.{dt.strftime(DATETIME_FORMAT)}.dump"
+        key_suffix = '.gpg' if encrypted else ''
+
+        return (f"{self.path_prefix}postgres.{database}." +
+                f"{dt.strftime(DATETIME_FORMAT)}.dump{key_suffix}")
 
     def fetch_backups(self):
         """ Retrieve backups from the remote bucket. """
@@ -111,11 +114,11 @@ class S3Remote: # pylint: disable=too-many-instance-attributes
         if res['ResponseMetadata']['HTTPStatusCode'] >= 300:
             raise RuntimeError(f"Error during deletion of {backup.path}")
 
-    def start_upload(self, database):
+    def start_upload(self, database, encrypted):
         """ Returns an Upload object that manages multipart uploads. """
 
         now = datetime.now()
-        path = self.generate_filename(database, dt=now)
+        path = self.generate_filename(database, now, encrypted)
         return Upload(
                 remote=self,
                 start_time=now,
