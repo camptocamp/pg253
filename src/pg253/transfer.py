@@ -52,7 +52,7 @@ class Transfer: # pylint: disable=too-few-public-methods
             s = StdErr(cmd_exec.stderr)
             s.start()
             while True:
-                self.metrics.set_part(self.database, upload.part_count)
+                self.metrics.set_part(self.database, len(upload.parts))
 
                 # Retrieve data from input in the buffer
                 bytes_read = cmd_exec.stdout.readinto(self.buffer)
@@ -62,18 +62,18 @@ class Transfer: # pylint: disable=too-few-public-methods
                     break
 
                 # Push buffer to object storage
-                upload.uploadPart(self.buffer,
+                upload.upload_part(self.buffer,
                                   bytes_read,
                                   self.buffer_size)
 
                 self.metrics.increment_write(self.database, bytes_read)
                 logging.info("Backup of database '%s': upload part %d, %s bytes written",
                     self.database,
-                    upload.part_count - 1,
+                    len(upload.parts),
                     sizeof_fmt(upload.bytes_uploaded))
 
             if cmd_exec.poll() is not None:
-                if upload.getBytesUploaded() == 0 or cmd_exec.returncode != 0:
+                if upload.bytes_uploaded == 0 or cmd_exec.returncode != 0:
                     upload.abort()
                     raise RuntimeError(
                         "Error: no data transfered or error on pg_dump: {s.output}")

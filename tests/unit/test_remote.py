@@ -42,7 +42,7 @@ def test_remote_list_empty():
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
 
-    remote_objects = list(s3_remote._list()) # pylint: disable=protected-access
+    remote_objects = list(s3_remote._list_objects()) # pylint: disable=protected-access
     assert len(remote_objects) == 0
 
 @mock_aws
@@ -52,19 +52,18 @@ def test_remote_list_multiple_objects():
             service_name="s3",
             region_name=FAKE_REMOTE_ARGS["region_name"])
     conn.create_bucket(Bucket=FAKE_REMOTE_ARGS["bucket"])
-    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/alpha").put(Body=bytearray(55))
-    conn.Object(FAKE_REMOTE_ARGS["bucket"], "/beta").put(Body=bytearray(93))
 
-    expected_results = [
-            ("alpha", 55),
-            ("beta", 93),
-    ]
+    expected_results = []
+    for i in range(0, 1200):
+        conn.Object(FAKE_REMOTE_ARGS["bucket"], f"/fakeobject-{i:04}").put(Body=bytearray(10))
+        expected_results.append((f"fakeobject-{i:04}", 10))
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
 
-    for i, (path, size) in enumerate(s3_remote._list()): # pylint: disable=protected-access
+    for i, (path, size) in enumerate(s3_remote._list_objects()): # pylint: disable=protected-access
         assert path == expected_results[i][0]
         assert size == expected_results[i][1]
+
 
 @mock_aws
 def test_remote_fetch_ok():
@@ -129,7 +128,6 @@ def test_remote_start_upload():
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
     upload = s3_remote.start_upload("mydb")
 
-    assert upload.database == "mydb"
     assert upload.start_time == datetime(2026, 1, 1, 0, 0, 1)
     assert upload.target['Bucket'] == FAKE_REMOTE_ARGS["bucket"]
     assert upload.target['Key'] == "/postgres.mydb.20260101-0000.dump"
@@ -145,9 +143,9 @@ def test_remote_upload_upload_part():
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
     upload = s3_remote.start_upload("mydb")
-    upload.uploadPart(bytearray(100), 100, 100)
+    upload.upload_part(bytearray(100), 100, 100)
 
-    assert upload.part_count == 2
+    assert len(upload.parts) == 1
     assert upload.bytes_uploaded == 100
 
 @mock_aws
@@ -161,7 +159,7 @@ def test_remote_upload_complete():
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
     upload = s3_remote.start_upload("mydb")
-    upload.uploadPart(bytearray(100), 100, 100)
+    upload.upload_part(bytearray(100), 100, 100)
     upload.complete()
 
 @mock_aws
@@ -175,5 +173,5 @@ def test_remote_upload_abort():
 
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
     upload = s3_remote.start_upload("mydb")
-    upload.uploadPart(bytearray(100), 100, 100)
+    upload.upload_part(bytearray(100), 100, 100)
     upload.abort()
