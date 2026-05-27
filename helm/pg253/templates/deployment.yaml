@@ -55,14 +55,6 @@ spec:
           - name: BUFFER_SIZE
             value: {{ .Values.pg.buffer_size | quote }}
           {{- end }}
-          {{- if .Values.encryption_passphrase }}
-          - name: ENCRYPTION_PASSPHRASE
-            value: {{ .Values.encryption_passphrase | quote }}
-          {{- end }}
-          {{- if .Values.backup_roles }}
-          - name: BACKUP_ROLES
-            value: {{ .Values.backup_roles | quote }}
-          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "pg253.fullname" . }}
