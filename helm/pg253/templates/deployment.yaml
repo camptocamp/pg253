@@ -27,9 +27,9 @@ spec:
             containerPort: {{ .Values.prometheus_exporter_port }}
             protocol: TCP
           env:
-          - name: AWS_ENDPOINT
+          - name: AWS_ENDPOINT_URL
             value: {{ .Values.s3.endpoint | quote }}
-          - name: AWS_S3_REGION_NAME
+          - name: AWS_DEFAULT_REGION
             value: {{ .Values.s3.region_name | quote }}
           - name: AWS_ACCESS_KEY_ID
             value: {{ .Values.s3.aws_access_key_id | quote }}
@@ -49,11 +49,22 @@ spec:
           {{- end }}
           - name: SCHEDULE
             value: {{ .Values.schedule | quote }}
-          - name: BLACKLISTED_DATABASES
+          - name: EXCLUDE_DATABASES
             value: {{ .Values.pg.blacklisted_databases | quote }}
           {{- if .Values.pg.buffer_size }}
           - name: BUFFER_SIZE
             value: {{ .Values.pg.buffer_size | quote }}
+          {{- end }}
+          {{- if .Values.backups_encryption.enabled }}
+          - name: ENCRYPTION_PASSPHRASE
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.backups_encryption.secret_name }}
+                key: {{ .Values.backups_encryption.secret_key }}
+          {{- end }}
+          {{- if .Values.enable_roles_backup }}
+          - name: BACKUP_ROLES
+            value: "true"
           {{- end }}
           envFrom:
             - secretRef:
