@@ -24,6 +24,9 @@ pg:
 prometheus_exporter_port: 9352
 # Cron like definition of the frequency of execution
 schedule: "0 1 * * *"
+# Provide a key length greater that 32 char to activate encryption at rest
+encryption_passphrase: ""
+backup_roles: false
 metricsLabels: {}
 image:
   repository: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3
