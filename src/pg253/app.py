@@ -61,7 +61,7 @@ class App:
 
         if self.backup_roles:
             try:
-                transfer.backup_database('pgroles', 'pg_dumpall --roles-only')
+                transfer.backup_database('pgroles', 'pg_dumpall --roles-only --no-role-passwords')
                 self.metrics.error.labels('pgroles').set(0)
             except Exception as e:
                 self.metrics.error.labels('pgroles').set(1)
