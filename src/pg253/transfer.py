@@ -107,7 +107,7 @@ class Transfer: # pylint: disable=too-few-public-methods
                 if self.upload.bytes_uploaded == 0 or cmd_exec.returncode != 0:
                     self.upload.abort()
                     raise RuntimeError(
-                        "Error: no data transfered or error on pg_dump: {s.output}")
+                        f"Error: no data transfered or error on pg_dump: {s.output}")
 
                 self.upload.complete()
                 self.metrics.add_backup(
