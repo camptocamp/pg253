@@ -42,7 +42,7 @@ class App:
                     f"Unable to retrieve database list: {e.stderr.decode('utf-8')}") from e
         return dbs
 
-    def backup_and_prune(self):
+    def backup_and_prune(self, *_):
         """ Run the backup and prune jobs. """
 
         try:
