@@ -113,7 +113,8 @@ class Transfer: # pylint: disable=too-few-public-methods
                 self.metrics.add_backup(
                         self.database,
                         self.upload.start_time,
-                        self.upload.bytes_uploaded)
+                        self.upload.bytes_uploaded,
+                        encrypted)
                 backup_end = datetime.now()
                 self.metrics.set_backup_duration(
                         self.database,

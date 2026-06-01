@@ -30,7 +30,8 @@ def test_refresh_metrics_ok(_):
                 database="foo",
                 dt=current_time,
                 size=10,
-                path="")
+                path="",
+                encrypted=False)
             ]
 
     metric_labels = {'database': 'foo'}
@@ -52,7 +53,8 @@ def test_refresh_metrics_databases_and_backups_removed(_):
                 database="foo",
                 dt=current_time,
                 size=10,
-                path="")
+                path="",
+                encrypted=False)
             ]
 
     metric_labels = {'database': 'foo'}
@@ -87,3 +89,30 @@ def test_refresh_metrics_database_but_no_backup(_):
     # Metrics should not exist
     assert REGISTRY.get_sample_value('first_backup', metric_labels) is None
     assert REGISTRY.get_sample_value('last_backup', metric_labels) is None
+
+@patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
+def test_refresh_metrics_backups_encrypted(_):
+    """Metrics should contain information regarding the backups encryption."""
+    mock_remote = MagicMock()
+    current_time = datetime.now()
+    mock_remote.fetch_backups.return_value = [
+            Backup(
+                database="foo",
+                dt=current_time,
+                size=10,
+                path="",
+                encrypted=True)
+            ]
+
+    metric_labels = {
+        'database': 'foo',
+        'date': current_time.strftime('%Y%m%d-%H%M'),
+        'size': '10',
+        'encrypted': 'true',
+    }
+
+    Metrics(mock_remote, 9352)
+
+    for metric in REGISTRY.collect():
+        print(metric)
+    assert REGISTRY.get_sample_value('backups', metric_labels) == current_time.timestamp()

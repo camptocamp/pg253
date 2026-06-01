@@ -18,6 +18,7 @@ class Backup:
     dt: datetime
     size: int
     path: str
+    encrypted: bool
 
 @dataclass
 class S3Remote: # pylint: disable=too-many-instance-attributes
@@ -66,12 +67,16 @@ class S3Remote: # pylint: disable=too-many-instance-attributes
                 date = datetime.strptime(
                         matches.group(2),
                         DATETIME_FORMAT)
+                encrypted = False
+                if matches.group(3) == '.gpg':
+                    encrypted = True
 
                 backup = Backup(
                         database=database,
                         dt=date,
                         size=size,
-                        path=path)
+                        path=path,
+                        encrypted=encrypted)
                 backups.append(backup)
         return backups
 

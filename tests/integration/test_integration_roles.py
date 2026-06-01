@@ -1,6 +1,6 @@
 """ Module to run integration tests """
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code,line-too-long
 
 import sys
 import os
@@ -113,7 +113,7 @@ def test_backup_roles_success(_):
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^backups{database="%s",date="[0-9]{8}-[0-9]{4}",size="[0-9]+"} .*$' % (database),
+                '^backups{database="%s",date="[0-9]{8}-[0-9]{4}",encrypted="false",size="[0-9]+"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(

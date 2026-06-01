@@ -43,7 +43,7 @@ class Metrics: # pylint: disable=too-many-instance-attributes
         self.backups = (
             Gauge('backups',
                   'All backups',
-                  ['database', 'date', 'size']))
+                  ['database', 'date', 'size', 'encrypted']))
         self.backup_duration = (
             Gauge('backup_duration',
                   'Duration of backup',
@@ -52,7 +52,7 @@ class Metrics: # pylint: disable=too-many-instance-attributes
             Gauge('error',
                   'Error during backup',
                   ['database']))
-        self._read_remote_backup()
+        self._read_remote_backups()
 
     def shutdown(self):
         """ Gracefully stop the metrics server. """
@@ -61,12 +61,12 @@ class Metrics: # pylint: disable=too-many-instance-attributes
         self.server.server_close()
         self.server_thread.join()
 
-    def _read_remote_backup(self):
+    def _read_remote_backups(self):
         """ Fetch remote backups and set metrics. """
 
         self.refresh_metrics()
         for backup in self.remote.fetch_backups():
-            self.add_backup(backup.database, backup.dt, backup.size)
+            self.add_backup(backup.database, backup.dt, backup.size, str(backup.encrypted))
 
 
     def refresh_metrics(self):
@@ -85,16 +85,24 @@ class Metrics: # pylint: disable=too-many-instance-attributes
             self.first_backup.labels(database).set(min(backup_dates).timestamp())
             self.last_backup.labels(database).set(max(backup_dates).timestamp())
 
-    def remove_backup(self, database, date, size):
+    def remove_backup(self, database, date, size, encrypted):
         """ Remove a "backups" metric. """
 
-        self.backups.remove(database, date.strftime('%Y%m%d-%H%M'), size)
+        self.backups.remove(
+                database,
+                date.strftime('%Y%m%d-%H%M'),
+                size,
+                str(encrypted).lower())
         self.refresh_metrics()
 
-    def add_backup(self, database, date, size):
+    def add_backup(self, database, date, size, encrypted):
         """ Add a "backups" metric. """
 
-        self.backups.labels(database, date.strftime('%Y%m%d-%H%M'), size).set(date.timestamp())
+        self.backups.labels(
+                database,
+                date.strftime('%Y%m%d-%H%M'),
+                size,
+                str(encrypted).lower()).set(date.timestamp())
         self.refresh_metrics()
 
     def set_last_backup(self, database, backup_datetime):

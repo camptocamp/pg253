@@ -120,7 +120,12 @@ def test_remote_delete_backup_clear_format():
     database = "mydb"
     dt = datetime(2021, 8, 6, 0, 22, 48, 236214)
 
-    backup = Backup(database=database, dt=dt, size=0, path="/postgres.mydb.20210806-0022.dump")
+    backup = Backup(
+            database=database,
+            dt=dt,
+            size=0,
+            path="/postgres.mydb.20210806-0022.dump",
+            encrypted=False)
     s3_remote = S3Remote(**FAKE_REMOTE_ARGS)
     s3_remote.delete_backup(backup)
 
