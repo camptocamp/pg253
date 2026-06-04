@@ -22,13 +22,14 @@ Environment variables for PostgreSQL can be used to configure access to database
 At least following variables must be defined:
 
 * `PGHOST`
+* `PGPORT`
 * `PGUSER`
 * `PGPASSWORD`
 
 Optional variables:
 
 * `EXCLUDE_DATABASES`: Regexp to exclude databases. Default to
-  `.*backup.*|postgres|rdsadmin`
+  `.*backup.*|postgres|rdsadmin|rdb|template.*`
 
 ## Backup configuration
 
@@ -37,15 +38,17 @@ Optional variables:
 * `BUFFER_SIZE`: Size of the main buffer, this parameter affect backup speed and
   memory usage. Default to `10 MB`.
 * `ENCRYPTION_PASSPHRASE`: Passphrase used to encrypt the backups with GPG. If omitted, encryption is disabled. Default to `""`.
+* `BACKUP_ROLES`: Backup all roles from the PostgreSQL server, without password. Default to `true`.
 
 ## Target configuration
 
 The following variables are mandatory:
 
-* `AWS_ENDPOINT_URL`: Object storage endpoint, example `http://minio:9000`
-* `AWS_S3_BUCKET`: Bucket name
-* `AWS_ACCESS_KEY_ID`
-* `AWS_SECRET_ACCESS_KEY`
+* `AWS_ENDPOINT_URL`: Object storage endpoint, example `http://minio:9000`.
+* `AWS_DEFAULT_REGION`: Object storage region.
+* `AWS_S3_BUCKET`: Object storage bucket name.
+* `AWS_ACCESS_KEY_ID`: Object storage access key.
+* `AWS_SECRET_ACCESS_KEY`: Object storage secret key.
 
 Optional variables:
 
