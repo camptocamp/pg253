@@ -63,17 +63,17 @@ class App:
             try:
                 transfer.backup_database('pgroles', 'pg_dumpall --roles-only --no-role-passwords')
                 self.metrics.error.labels('pgroles').set(0)
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-exception-caught
                 self.metrics.error.labels('pgroles').set(1)
-                raise e
+                logging.error("Error during backup of roles : %s", e)
 
         for database in self.list_databases():
             try:
                 transfer.backup_database(database, f"pg_dump -Fc -Z1 -v -d {database}")
                 self.metrics.error.labels(database).set(0)
-            except Exception as e:
+            except Exception as e: # pylint: disable=broad-exception-caught
                 self.metrics.error.labels(database).set(1)
-                raise e
+                logging.error("Error during backup of '%s' : %s",database, e)
 
     def prune(self):
         """ For each database, create a PostgreSQL dump and upload it to S3. """

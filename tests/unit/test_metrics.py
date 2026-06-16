@@ -1,24 +1,12 @@
 """Module for testing the metrics module"""
 
 from datetime import datetime
-
 from unittest.mock import patch, MagicMock
-from prometheus_client import REGISTRY, CollectorRegistry
-import pytest
+from prometheus_client import REGISTRY
 
 from pg253.metrics import Metrics
 from pg253.remote import Backup
 
-
-@pytest.fixture(autouse=True)
-def setup():
-    """Actions to run before and after each test"""
-    collector = CollectorRegistry(auto_describe=True)
-    REGISTRY.register(collector)
-    yield
-    collectors = list(REGISTRY._collector_to_names.keys()) # pylint: disable=W0212
-    for collector in collectors:
-        REGISTRY.unregister(collector)
 
 @patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
 def test_refresh_metrics_ok(_):
