@@ -81,7 +81,7 @@
       ],
       "targets": [
         {
-          "expr": "first_backup{database=~\"$database\"} * 1000",
+          "expr": "pg253_first_backup{database=~\"$database\"} * 1000",
           "format": "table",
           "instant": true,
           "interval": "",
@@ -157,7 +157,7 @@
       ],
       "targets": [
         {
-          "expr": "last_backup{database=~\"$database\"} * 1000",
+          "expr": "pg253_last_backup{database=~\"$database\"} * 1000",
           "format": "table",
           "instant": true,
           "interval": "",
@@ -233,7 +233,7 @@
       ],
       "targets": [
         {
-          "expr": "count by (database) (backups{database=~\"$database\"})",
+          "expr": "count by (database) (pg253_backups{database=~\"$database\"})",
           "format": "table",
           "instant": true,
           "interval": "",
@@ -326,7 +326,7 @@
       ],
       "targets": [
         {
-          "expr": "backups{database=~\"$database\"} * 1000",
+          "expr": "pg253_backups{database=~\"$database\"} * 1000",
           "format": "table",
           "instant": true,
           "interval": "",
@@ -470,7 +470,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "backups{database=~\"$database\"} * 1000",
+          "expr": "pg253_backups{database=~\"$database\"} * 1000",
           "interval": "",
           "legendFormat": "{{database}}",
           "refId": "A"
@@ -1104,13 +1104,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "current_bytes_write{database=~\"$database\"}",
+          "expr": "pg253_current_bytes_write{database=~\"$database\"}",
           "interval": "",
           "legendFormat": "Write for '{{database}}'",
           "refId": "A"
         },
         {
-          "expr": "current_bytes_read{database=~\"$database\"}",
+          "expr": "pg253_current_bytes_read{database=~\"$database\"}",
           "interval": "",
           "legendFormat": "Read for '{{database}}'",
           "refId": "B"
@@ -1198,13 +1198,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(current_bytes_write{database=~\"$database\"}[30s])",
+          "expr": "rate(pg253_current_bytes_write{database=~\"$database\"}[30s])",
           "interval": "",
           "legendFormat": "Write for '{{database}}'",
           "refId": "A"
         },
         {
-          "expr": "rate(current_bytes_read{database=~\"$database\"}[30s])",
+          "expr": "rate(pg253_current_bytes_read{database=~\"$database\"}[30s])",
           "interval": "",
           "legendFormat": "Read for '{{database}}'",
           "refId": "B"
@@ -1380,13 +1380,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "total_bytes_write_total",
+          "expr": "pg253_total_bytes_write_total",
           "interval": "",
           "legendFormat": "Write",
           "refId": "A"
         },
         {
-          "expr": "total_bytes_read_total",
+          "expr": "pg253_total_bytes_read_total",
           "interval": "",
           "legendFormat": "Read",
           "refId": "B"
@@ -1474,13 +1474,13 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(total_bytes_write_total[30s])",
+          "expr": "rate(pg253_total_bytes_write_total[30s])",
           "interval": "",
           "legendFormat": "Write",
           "refId": "A"
         },
         {
-          "expr": "rate(total_bytes_read_total[30s])",
+          "expr": "rate(pg253_total_bytes_read_total[30s])",
           "interval": "",
           "legendFormat": "Read",
           "refId": "B"
@@ -1542,7 +1542,7 @@
           "value": "$__all"
         },
         "datasource": "Prometheus",
-        "definition": "last_backup",
+        "definition": "pg253_last_backup",
         "hide": 0,
         "includeAll": true,
         "index": -1,
@@ -1550,7 +1550,7 @@
         "multi": false,
         "name": "database",
         "options": [],
-        "query": "last_backup",
+        "query": "pg253_last_backup",
         "refresh": 2,
         "regex": "/database=\"([^\"]+)\"/",
         "skipUrlSync": false,
@@ -1587,5 +1587,5 @@
   "variables": {
     "list": []
   },
-  "version": 20
+  "version": 21
 }
