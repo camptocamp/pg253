@@ -1,10 +1,10 @@
-ARG POSTGRESQL_VERSION="16"
+ARG POSTGRESQL_VERSION="18"
+ARG DEBIAN_VERSION="trixie"
 
 # Build exporter
-FROM docker.io/library/debian:bookworm AS builder
+FROM docker.io/library/debian:${DEBIAN_VERSION} AS builder
 
 WORKDIR /usr/src/
-
 
 # Install python
 RUN apt-get update && apt-get install -y python3 python3-pip
