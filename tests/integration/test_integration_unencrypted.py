@@ -86,41 +86,41 @@ def test_backup_databases_success_unencrypted(_):
 
     r = requests.get('http://127.0.0.1:9352/metrics', timeout=5)
     assert r.status_code == 200
-    assert re.search('^total_bytes_read_total .*$', r.text, re.MULTILINE)
-    assert re.search('^total_bytes_read_created .*$', r.text, re.MULTILINE)
-    assert re.search('^total_bytes_write_total .*$', r.text, re.MULTILINE)
-    assert re.search('^total_bytes_write_created .*$', r.text, re.MULTILINE)
+    assert re.search('^pg253_total_bytes_read_total .*$', r.text, re.MULTILINE)
+    assert re.search('^pg253_total_bytes_read_created .*$', r.text, re.MULTILINE)
+    assert re.search('^pg253_total_bytes_write_total .*$', r.text, re.MULTILINE)
+    assert re.search('^pg253_total_bytes_write_created .*$', r.text, re.MULTILINE)
     for database in expected_dbs:
         assert re.search(
-                '^current_bytes_read{database="%s"} .*$' % (database),
+                '^pg253_current_bytes_read{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^current_bytes_write{database="%s"} .*$' % (database),
+                '^pg253_current_bytes_write{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^part_count{database="%s"} .*$' % (database),
+                '^pg253_part_count{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^first_backup{database="%s"} .*$' % (database),
+                '^pg253_first_backup{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^last_backup{database="%s"} .*$' % (database),
+                '^pg253_last_backup{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^backups{database="%s",date="[0-9]{8}-[0-9]{4}",encrypted="false",size="[0-9]+"} .*$' % (database),
+                '^pg253_backups{database="%s",date="[0-9]{8}-[0-9]{4}",encrypted="false",size="[0-9]+"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^backup_duration{database="%s"} .*$' % (database),
+                '^pg253_backup_duration{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
         assert re.search(
-                '^error{database="%s"} .*$' % (database),
+                '^pg253_error{database="%s"} .*$' % (database),
                 r.text,
                 re.MULTILINE)
 

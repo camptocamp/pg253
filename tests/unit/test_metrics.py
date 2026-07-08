@@ -27,8 +27,10 @@ def test_refresh_metrics_ok(_):
     m = Metrics(mock_remote, 9352)
     m.refresh_metrics()
 
-    assert REGISTRY.get_sample_value('first_backup', metric_labels) == current_time.timestamp()
-    assert REGISTRY.get_sample_value('last_backup', metric_labels) == current_time.timestamp()
+    assert REGISTRY.get_sample_value('pg253_first_backup', metric_labels) == \
+        current_time.timestamp()
+    assert REGISTRY.get_sample_value('pg253_last_backup', metric_labels) == \
+        current_time.timestamp()
 
 
 @patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
@@ -51,15 +53,17 @@ def test_refresh_metrics_databases_and_backups_removed(_):
     m.refresh_metrics()
 
     # We have a database backup, we should have metrics
-    assert REGISTRY.get_sample_value('first_backup', metric_labels) == current_time.timestamp()
-    assert REGISTRY.get_sample_value('last_backup', metric_labels) == current_time.timestamp()
+    assert REGISTRY.get_sample_value('pg253_first_backup', metric_labels) == \
+             current_time.timestamp()
+    assert REGISTRY.get_sample_value('pg253_last_backup', metric_labels) == \
+             current_time.timestamp()
 
     mock_remote.fetch_backups.return_value = []
     m.refresh_metrics()
 
     # We removed database's backups, we shouldn't have metrics anymore
-    assert REGISTRY.get_sample_value('first_backup', metric_labels) is None
-    assert REGISTRY.get_sample_value('last_backup', metric_labels) is None
+    assert REGISTRY.get_sample_value('pg253_first_backup', metric_labels) is None
+    assert REGISTRY.get_sample_value('pg253_last_backup', metric_labels) is None
 
 @patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
 def test_refresh_metrics_database_but_no_backup(_):
@@ -75,8 +79,8 @@ def test_refresh_metrics_database_but_no_backup(_):
     m.refresh_metrics()
 
     # Metrics should not exist
-    assert REGISTRY.get_sample_value('first_backup', metric_labels) is None
-    assert REGISTRY.get_sample_value('last_backup', metric_labels) is None
+    assert REGISTRY.get_sample_value('pg253_first_backup', metric_labels) is None
+    assert REGISTRY.get_sample_value('pg253_last_backup', metric_labels) is None
 
 @patch('pg253.metrics.start_http_server', autospec=True, return_value=(None, None))
 def test_refresh_metrics_backups_encrypted(_):
@@ -103,4 +107,4 @@ def test_refresh_metrics_backups_encrypted(_):
 
     for metric in REGISTRY.collect():
         print(metric)
-    assert REGISTRY.get_sample_value('backups', metric_labels) == current_time.timestamp()
+    assert REGISTRY.get_sample_value('pg253_backups', metric_labels) == current_time.timestamp()

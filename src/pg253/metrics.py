@@ -15,41 +15,41 @@ class Metrics: # pylint: disable=too-many-instance-attributes
         self.server, self.server_thread = start_http_server(int(exporter_port))
 
         self.total_bytes_read = (
-            Counter('total_bytes_read',
+            Counter('pg253_total_bytes_read',
                     'Total bytes reads from input'))
         self.current_bytes_read = (
-            Gauge('current_bytes_read',
+            Gauge('pg253_current_bytes_read',
                   'Bytes reads from input for current transfer',
                   ['database']))
         self.total_bytes_write = (
-            Counter('total_bytes_write',
+            Counter('pg253_total_bytes_write',
                     'Total bytes uploaded to object storage'))
         self.current_bytes_write = (
-            Gauge('current_bytes_write',
+            Gauge('pg253_current_bytes_write',
                   'Bytes uploaded to object storage for current transfer',
                   ['database']))
         self.part_count = (
-            Gauge('part_count',
+            Gauge('pg253_part_count',
                   'Part of the Multipart upload uploaded',
                   ['database']))
         self.first_backup = (
-            Gauge('first_backup',
+            Gauge('pg253_first_backup',
                   'Date of first backup',
                   ['database']))
         self.last_backup = (
-            Gauge('last_backup',
+            Gauge('pg253_last_backup',
                   'Date of last backup',
                   ['database']))
         self.backups = (
-            Gauge('backups',
+            Gauge('pg253_backups',
                   'All backups',
                   ['database', 'date', 'size', 'encrypted']))
         self.backup_duration = (
-            Gauge('backup_duration',
+            Gauge('pg253_backup_duration',
                   'Duration of backup',
                   ['database']))
         self.error = (
-            Gauge('error',
+            Gauge('pg253_error',
                   'Error during backup',
                   ['database']))
         self._read_remote_backups()
