@@ -6,6 +6,7 @@ on:
     - cron: "2 2 * * SUN"
   push:
     branches: ['main']
+    tags: ['*']
 
 env:
   REGISTRY: ghcr.io
@@ -51,6 +52,7 @@ jobs:
           tags: |
             type=ref,event=branch,suffix=-pg${{ matrix.pg_version }}
             type=sha,prefix=,suffix=-pg${{ matrix.pg_version }}
+            type=semver,pattern={{version}},suffix=-pg${{ matrix.pg_version }}
 
       - name: Build and push Docker Image
         id: push
