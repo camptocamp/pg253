@@ -18,7 +18,7 @@ pg:
   # K8s secret name if already created outside of this chart (will override any PG value set above)
   # Expected secret keys are: PGHOST, PGPORT, PGUSER, PGPASSWORD and PGDATABASE
   # secret_name: "my_secret"
-  blacklisted_databases: "postgres|rdsadmin|rdb|template1"
+  blacklisted_databases: "postgres|rdsadmin|rdb|template0|template1"
   retention_days: 15
   # buffer_size: default to 10*1024*1024 (10Mb)
 prometheus_exporter_port: 9352
