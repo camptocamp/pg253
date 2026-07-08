@@ -24,6 +24,11 @@ pg:
 prometheus_exporter_port: 9352
 # Cron like definition of the frequency of execution
 schedule: "0 1 * * *"
+backups_encryption:
+  enabled: false
+  # secret_name: mysecret
+  # secret_key: mykey
+enable_roles_backup: false
 metricsLabels: {}
 image:
   repository: registry.gitlab.com/camptocamp/is/tools/docker-postgres-backup-to-s3

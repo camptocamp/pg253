@@ -22,13 +22,14 @@ Environment variables for PostgreSQL can be used to configure access to database
 At least following variables must be defined:
 
 * `PGHOST`
+* `PGPORT`
 * `PGUSER`
 * `PGPASSWORD`
 
 Optional variables:
 
-* `BLACKLISTED_DATABASES`: Regexp to exclude databases. Default to
-  `.*backup.*|postgres|rdsadmin`
+* `EXCLUDE_DATABASES`: Regexp to exclude databases. Default to
+  `.*backup.*|postgres|rdsadmin|rdb|template.*`
 
 ## Backup configuration
 
@@ -36,15 +37,18 @@ Optional variables:
   deleted. Default to `15`.
 * `BUFFER_SIZE`: Size of the main buffer, this parameter affect backup speed and
   memory usage. Default to `10 MB`.
+* `ENCRYPTION_PASSPHRASE`: Passphrase used to encrypt the backups with GPG. If omitted, encryption is disabled. Default to `""`.
+* `BACKUP_ROLES`: Backup all roles from the PostgreSQL server, without password. Default to `true`.
 
 ## Target configuration
 
 The following variables are mandatory:
 
-* `AWS_ENDPOINT`: Object storage endpoint, example `http://minio:9000`
-* `AWS_S3_BUCKET`: Bucket name
-* `AWS_ACCESS_KEY_ID`
-* `AWS_SECRET_ACCESS_KEY`
+* `AWS_ENDPOINT_URL`: Object storage endpoint, example `http://minio:9000`.
+* `AWS_DEFAULT_REGION`: Object storage region.
+* `AWS_S3_BUCKET`: Object storage bucket name.
+* `AWS_ACCESS_KEY_ID`: Object storage access key.
+* `AWS_SECRET_ACCESS_KEY`: Object storage secret key.
 
 Optional variables:
 
@@ -52,4 +56,14 @@ Optional variables:
 
 ## Monitoring
 
-* `PROMETHEUS_EXPORTER_PORT`: prometheus endpoint port. Default to `9352`
+* `METRICS_PORT`: prometheus endpoint port. Default to `9352`
+
+# Encryption / Decryption
+
+PG253 allows you to symmetrically encrypt your backups with GPG. To enable this feature, you must configure the environment variable `ENCRYPTION_PASSPHRASE`. If omitted, backups will not be encrypted.
+
+To restore an encrypted backup, you must first decrypt it with a standard GPG binary:
+
+```bash
+gpg --output mydatabase.dump --decrypt mydatabase-encrypted.dump
+```

@@ -6,8 +6,8 @@ CREATE TABLE data(
   data text
 );
 
--- Generate a 5Go DB
-INSERT INTO data (data) SELECT g.id::text || 'Some more data to fill the DB' FROM generate_series(1, (6000000 / 438) * 5000) AS g (id);
+-- Generate a 1Go DB
+INSERT INTO data (data) SELECT g.id::text || 'Some more data to fill the DB' FROM generate_series(1, (6000000 / 438) * 1000) AS g (id);
 
 -- Application DB
 CREATE DATABASE application;
